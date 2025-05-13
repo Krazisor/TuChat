@@ -31,7 +31,7 @@ const HomePage: React.FC = () => {
     const { signIn, signOut, isAuthenticated } = useLogto();
 
     return (
-        <Layout style={{ minHeight: '100vh', background: '#fff', width: '100%' }}>
+        <Layout style={{ minHeight: '100vh', background: '#fff'}}>
             {/* 头部导航 */}
             <Header style={{
                 padding: '0 50px',
@@ -57,7 +57,7 @@ const HomePage: React.FC = () => {
 
                     <div style={{ display: 'flex', alignItems: 'center' }}>
                         <Space size="middle">
-                            <Button type="text">仪表盘</Button>
+                            <Button type="text" onClick={() => nav("/dashboard")}>仪表盘</Button>
                             {isAuthenticated ?
                                 <Button type="primary" style={{ backgroundColor: colors.blue }} onClick={() => signOut(env.VITE_APP_URL)}>注销</Button> :
                                 <Button type="primary" style={{ backgroundColor: colors.blue }} onClick={() => signIn(env.VITE_APP_URL + '/callback')}>登录</Button> }

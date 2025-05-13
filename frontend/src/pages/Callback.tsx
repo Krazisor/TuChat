@@ -21,7 +21,6 @@ const Callback: React.FC = () => {
                 const saToken = await loginToBE(token!)
                 if (saToken) {
                     dispatch(setLoginStatus(saToken))
-                    console.log()
                     nav('/dashboard');
                 } else {
                     nav('/')
