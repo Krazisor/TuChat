@@ -16,7 +16,6 @@ const ProtectedRoute: React.FC<{ element: React.ReactNode }> = ({ element }) => 
     useEffect(() => {
         const checkAuth = async () => {
             const token = await getAccessToken();
-            console.log(token, user.isSignedIn)
             if (!token || !user.isSignedIn) {
                 message.info('请先登录');
                 setIsAuthorized(false);

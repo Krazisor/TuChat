@@ -4,6 +4,7 @@ const { Header, Content } = Layout;
 const { Title } = Typography;
 import SideBar from "./Sidebar.tsx"
 import Developing from "../dashboardPages/Developing.tsx";
+import UserProfile from "../dashboardPages/UserProfile.tsx";
 
 export type ActiveMenuTypes = 'profile' | 'aiChat' | 'knowledge' | 'database' | 'organization' | 'settings' | 'help';
 
@@ -26,8 +27,8 @@ const Dashboard = () => {
 
     const renderContent = () => {
         switch (activeMenu) {
-            // case 'profile':
-            //     return <Profile />;
+            case 'profile':
+                return <UserProfile />;
             // case 'aiChat':
             //     return <AIChat />;
             // case 'knowledge':

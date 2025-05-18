@@ -23,6 +23,7 @@ export const fetchAPI = async <T>(url: string, options?: RequestInit): Promise<T
                 'Content-Type': 'application/json',
                 ...options.headers,
             }
+            console.log(options.headers)
         }
     }
     const response = await fetch(`${BASE_URL}${url}`, options);

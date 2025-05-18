@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import type {ActiveMenuTypes} from "./index.tsx";
 import {
     Layout,
@@ -24,6 +24,9 @@ import {
 } from '@ant-design/icons';
 import {useLogto} from "@logto/react";
 import {env} from "../../env.ts";
+import {useAppDispatch, useAppSelector} from "../../stores/StoreHook.ts";
+import {clearUserInfo, setLogoutStatus, setUserInfo} from "../../stores/slices/userSlices.ts";
+import {getUserBaseInfo, type UserBaseType} from "../../api/userApi.ts";
 
 const { Sider } = Layout;
 const { Text } = Typography;
@@ -44,14 +47,17 @@ interface User {
 }
 
 const Sidebar: React.FC<SideBarProps> = ({ activeMenu, setActiveMenu, collapsed, setCollapsed }) => {
-    // 模拟用户数据
-    const user:User = {
-        name: '张三',
+    // 用户数据
+    const [user, setUser] = useState<User>({
+        name: '用户',
         avatar: null, // 如果有，可以替换为实际URL
-        status: 'online', // online, away, offline
-    };
+        status: 'away', // online, away, offline
+    })
 
     const { signOut } = useLogto();
+
+    const dispatch = useAppDispatch();
+    const userSlice = useAppSelector(state => state.user)
 
     // 状态指示器颜色
     const statusColors: Record<UserStatus, string> = {
@@ -59,6 +65,23 @@ const Sidebar: React.FC<SideBarProps> = ({ activeMenu, setActiveMenu, collapsed,
         away: '#faad14',
         offline: '#bfbfbf',
     };
+
+    useEffect(() => {
+        let response: UserBaseType| null = null;
+        const tempFunction = async () => {
+            response = await getUserBaseInfo();
+        }
+        tempFunction().then(r => {
+            if (response != null) {
+                dispatch(setUserInfo(response));
+                setUser({
+                    name: userSlice.userInfo!.userName,
+                    avatar: userSlice.userInfo!.avatar,
+                    status: 'online'
+                })
+            }
+        });
+    }, []);
 
     const menuItems = [
         { key: 'profile', icon: <UserOutlined />, label: '个人信息' },
@@ -77,6 +100,14 @@ const Sidebar: React.FC<SideBarProps> = ({ activeMenu, setActiveMenu, collapsed,
             label: '帮助与支持',
         },
     ];
+
+    // 退出登录
+    const logout = () => {
+        signOut(env.VITE_APP_URL).then(r =>  {
+            dispatch(setLogoutStatus())
+            dispatch(clearUserInfo());
+        });
+    }
 
     return (
         <Sider
@@ -154,7 +185,7 @@ const Sidebar: React.FC<SideBarProps> = ({ activeMenu, setActiveMenu, collapsed,
                         icon={<LogoutOutlined />}
                         style={{ margin: '8px 0' }}
                         block
-                        onClick={() => signOut(env.VITE_APP_URL)}
+                        onClick={() => logout()}
                     >
                         {!collapsed && '退出登录'}
                     </Button>

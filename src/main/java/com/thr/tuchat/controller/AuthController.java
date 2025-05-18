@@ -1,13 +1,14 @@
 package com.thr.tuchat.controller;
 
 import cn.dev33.satoken.stp.StpUtil;
-import cn.dev33.satoken.util.SaResult;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thr.tuchat.config.LogtoConfig;
-import com.thr.tuchat.pojo.Result;
+import com.thr.tuchat.pojo.ResponseResult;
+import com.thr.tuchat.pojo.User;
+import com.thr.tuchat.service.UserService;
 import io.jsonwebtoken.*;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,13 +27,15 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @CrossOrigin
 @RestController
 public class AuthController {
 
     private final LogtoConfig logtoConfig;
-//    @Autowired
-//    private UserService userService;
+
+    @Resource
+    private UserService userService;
 
     // 构造方法注入
     public AuthController(LogtoConfig logtoConfig) {
@@ -54,18 +57,23 @@ public class AuthController {
             String avatar = user.get("avatar");
             String email = user.get("primaryEmail");
             String username = user.get("username");
+            log.info("收取到用户信息:#{}, #{}, #{}, #{}", userId, username, email, avatar);
             StpUtil.login(userId); // 这里的 userId 是 Logto 返回的 `sub`
-//            User u = new User(userId, username, email, avatar);
-//            userService.saveOrUpdateUser(u);
-            return Result.success(StpUtil.getTokenValue());
+            User u = new User()
+                    .setUserId(userId)
+                    .setUserName(username)
+                    .setEmail(email)
+                    .setAvatar(avatar);
+            userService.saveOrUpdateUser(u);
+            return ResponseResult.success(StpUtil.getTokenValue());
         } catch (SecurityException e) {
-            return Result.fail("令牌错误");
+            return ResponseResult.fail("令牌错误");
         } catch (ExpiredJwtException e) {
-            return Result.fail("令牌过期");
+            return ResponseResult.fail("令牌过期");
         } catch (JwtException e) {
-            return Result.fail("JWT 令牌解析失败");
+            return ResponseResult.fail("JWT 令牌解析失败");
         } catch (Exception e) {
-            return Result.fail(e.getMessage());
+            return ResponseResult.fail(e.getMessage());
         }
     }
 

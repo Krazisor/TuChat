@@ -5,6 +5,7 @@ import cn.dev33.satoken.router.SaHttpMethod;
 import cn.dev33.satoken.router.SaRouter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -34,7 +35,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
         // 1. 放行所有 OPTIONS 预检请求
         registry.addInterceptor(new HandlerInterceptor() {
             @Override
-            public boolean preHandle(HttpServletRequest req, HttpServletResponse res, Object handler) {
+            public boolean preHandle(@NotNull HttpServletRequest req, @NotNull HttpServletResponse res, @NotNull Object handler) {
                 if ("OPTIONS".equalsIgnoreCase(req.getMethod())) {
                     res.setStatus(HttpServletResponse.SC_OK);
                     return false;

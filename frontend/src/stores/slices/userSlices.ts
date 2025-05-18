@@ -1,13 +1,16 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import type {UserBaseType} from "../../api/userApi.ts";
 
 export interface userSliceType {
     isSignedIn: boolean
-    saToken: string | undefined
+    saToken: string | null
+    userInfo: UserBaseType | null
 }
 
 const initialState: userSliceType = {
     isSignedIn: false,
-    saToken: undefined
+    saToken: null,
+    userInfo: null
 };
 
 const userSlice = createSlice({
@@ -20,7 +23,13 @@ const userSlice = createSlice({
         },
         setLogoutStatus(state) {
             state.isSignedIn = false;
-            state.saToken = undefined;
+            state.saToken = null;
+        },
+        setUserInfo(state, action:PayloadAction<UserBaseType>) {
+            state.userInfo = action.payload;
+        },
+        clearUserInfo(state) {
+            state.userInfo = null;
         }
     },
 });
@@ -28,7 +37,9 @@ const userSlice = createSlice({
 // 导出操作函数
 export const {
     setLoginStatus,
-    setLogoutStatus
+    setLogoutStatus,
+    setUserInfo,
+    clearUserInfo
 } = userSlice.actions;
 
 // 导出 reducer

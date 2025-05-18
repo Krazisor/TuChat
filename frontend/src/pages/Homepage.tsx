@@ -31,7 +31,7 @@ const HomePage: React.FC = () => {
     const { signIn, signOut, isAuthenticated } = useLogto();
 
     return (
-        <Layout style={{ minHeight: '100vh', background: '#fff'}}>
+        <Layout style={{background: '#fff', width: '100%'}}>
             {/* 头部导航 */}
             <Header style={{
                 padding: '0 50px',
