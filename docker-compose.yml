@@ -1,0 +1,11 @@
+version: "3.8"
+services:
+  springboot-app:
+    build: .
+    container_name: tuchat_BE
+    ports:
+      - "8080:8080"
+    volumes:
+      # 替换为你自己主机上的 application.yaml 文件绝对路径
+      - ./application.yaml:/etc/tuchat/application.yaml:ro
+    restart: unless-stopped
