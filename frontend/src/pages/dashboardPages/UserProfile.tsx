@@ -11,7 +11,7 @@ import {
     Divider,
     Row,
     Col,
-    Space
+    Space, type UploadProps
 } from 'antd';
 import {
     UserOutlined,
@@ -22,8 +22,9 @@ import {
     UploadOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import {useAppSelector} from "../../stores/StoreHook.ts";
-import {getUserBaseInfo} from "../../api/userApi.ts";
+import {useAppDispatch, useAppSelector} from "../../stores/StoreHook.ts";
+import {getUserBaseInfo, updateUserAvatar} from "../../api/userApi.ts";
+import {setUserInfo} from "../../stores/slices/userSlices.ts";
 
 const { Title, Text } = Typography;
 
@@ -39,22 +40,23 @@ const UserProfile = () => {
     });
 
     const [form] = Form.useForm();
+    const dispatch = useAppDispatch();
     const [editing, setEditing] = useState(false);
     const [loading, setLoading] = useState(false);
     const [changePassword, setChangePassword] = useState(false);
     const userSlice = useAppSelector(state => state.user)
 
     // 处理头像上传
-    const handleAvatarChange = (info: { file: { status: string; response: { url: any; }; originFileObj: Blob | MediaSource; }; }) => {
+    const handleAvatarChange: UploadProps['onChange'] = (info) => {
+        // status: uploading, done, error, removed
         if (info.file.status === 'uploading') {
+            // 可以加loading处理
             return;
         }
-
         if (info.file.status === 'done') {
-            // 在实际应用中，这里应该获取服务器返回的URL
             setUserData({
                 ...userData,
-                avatar: info.file.response.url || URL.createObjectURL(info.file.originFileObj)
+                avatar: info.file.response?.url || URL.createObjectURL(info.file.originFileObj!)
             });
             message.success('头像上传成功');
         } else if (info.file.status === 'error') {
@@ -62,9 +64,23 @@ const UserProfile = () => {
         }
     };
 
+    const customRequest = async (options: any) => {
+        const { file, onSuccess, onError } = options;
+        try {
+            const result = await updateUserAvatar(file as File);
+            const userInfo = await getUserBaseInfo();
+            if (userInfo != null) {
+                dispatch(setUserInfo(userInfo))
+            }
+            // 手动触发onSuccess，Upload才会进到done状态
+            onSuccess(result, file);
+        } catch (e) {
+            onError(e);
+        }
+    }
+
     useEffect(() => {
         if (userSlice.userInfo !== null) {
-            console.log(userSlice.userInfo.createTime)
             setUserData({
                 ...userSlice.userInfo,
                 password: '••••••••••',
@@ -87,27 +103,6 @@ const UserProfile = () => {
         setEditing(false);
         setChangePassword(false);
         form.resetFields();
-    };
-
-    // 处理密码修改选择
-    const handlePasswordChange = (checked: boolean | ((prevState: boolean) => boolean)) => {
-        setChangePassword(checked);
-        if (!checked) {
-            form.setFieldsValue({
-                oldPassword: '',
-                newPassword: '',
-                confirmPassword: '',
-            });
-        }
-    };
-
-    // 验证确认密码
-    const validateConfirmPassword = (_: any, value: any) => {
-        const newPassword = form.getFieldValue('newPassword');
-        if (value && value !== newPassword) {
-            return Promise.reject(new Error('两次输入的密码不一致!'));
-        }
-        return Promise.resolve();
     };
 
     // 保存用户信息
@@ -172,8 +167,8 @@ const UserProfile = () => {
                                 listType="picture-card"
                                 className="avatar-uploader"
                                 showUploadList={false}
-                                action="https://www.mocky.io/v2/5cc8019d300000980a055e76" // 替换为您的上传API
-                                onChange={() => handleAvatarChange}
+                                customRequest={customRequest} // 使用自己的上传函数
+                                onChange={handleAvatarChange}
                             >
                                 {userData.avatar ? (
                                     <Avatar
@@ -231,66 +226,6 @@ const UserProfile = () => {
                                     <Input value={userData.userName} disabled={!editing} />
                                 )}
                             </Form.Item>
-
-                            {/* 密码区域 */}
-                            {!editing ? (
-                                <Form.Item
-                                    label={<Space><LockOutlined /> 密码</Space>}
-                                >
-                                    <Input
-                                        value={userData.password}
-                                        disabled
-                                    />
-                                </Form.Item>
-                            ) : (
-                                <>
-                                    <Form.Item label={<Space><LockOutlined /> 密码</Space>}>
-                                        <Button
-                                            type={changePassword ? "primary" : "default"}
-                                            onClick={() => handlePasswordChange(!changePassword)}
-                                        >
-                                            {changePassword ? '取消修改密码' : '修改密码'}
-                                        </Button>
-                                    </Form.Item>
-
-                                    {changePassword && (
-                                        <>
-                                            <Form.Item
-                                                name="oldPassword"
-                                                label="旧密码"
-                                                rules={[
-                                                    { required: true, message: '请输入旧密码' },
-                                                ]}
-                                            >
-                                                <Input.Password placeholder="请输入旧密码" />
-                                            </Form.Item>
-
-                                            <Form.Item
-                                                name="newPassword"
-                                                label="新密码"
-                                                rules={[
-                                                    { required: true, message: '请输入新密码' },
-                                                    { min: 6, message: '密码至少包含6个字符' }
-                                                ]}
-                                            >
-                                                <Input.Password placeholder="请输入新密码" />
-                                            </Form.Item>
-
-                                            <Form.Item
-                                                name="confirmPassword"
-                                                label="确认新密码"
-                                                dependencies={['newPassword']}
-                                                rules={[
-                                                    { required: true, message: '请确认新密码' },
-                                                    { validator: validateConfirmPassword }
-                                                ]}
-                                            >
-                                                <Input.Password placeholder="请再次输入新密码" />
-                                            </Form.Item>
-                                        </>
-                                    )}
-                                </>
-                            )}
 
                             {/* 注册时间 - 不可编辑 */}
                             <Form.Item

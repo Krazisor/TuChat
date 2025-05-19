@@ -1,4 +1,4 @@
-import {fetchAPI} from "./BaseApi.ts";
+import {fetchAPI, uploadFileAPI} from "./BaseApi.ts";
 
 export interface UserBaseType {
     userId: string,
@@ -9,6 +9,10 @@ export interface UserBaseType {
 }
 
 
-export function getUserBaseInfo(): Promise<UserBaseType | null> {
-    return fetchAPI(`/user/getInfo`, {})
+export async function getUserBaseInfo(): Promise<UserBaseType | null> {
+    return await fetchAPI(`/user/getInfo`, {})
+}
+
+export const updateUserAvatar = async (file: File): Promise<string | null> => {
+    return await uploadFileAPI('/user/updateAvatar', file)
 }

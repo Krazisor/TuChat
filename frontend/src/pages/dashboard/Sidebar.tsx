@@ -8,7 +8,7 @@ import {
     Divider,
     Button,
     Tooltip,
-    Badge
+    Badge, message
 } from 'antd';
 import {
     UserOutlined,
@@ -70,18 +70,22 @@ const Sidebar: React.FC<SideBarProps> = ({ activeMenu, setActiveMenu, collapsed,
         let response: UserBaseType| null = null;
         const tempFunction = async () => {
             response = await getUserBaseInfo();
-        }
-        tempFunction().then(r => {
             if (response != null) {
                 dispatch(setUserInfo(response));
-                setUser({
-                    name: userSlice.userInfo!.userName,
-                    avatar: userSlice.userInfo!.avatar,
-                    status: 'online'
-                })
             }
-        });
+        }
+        tempFunction()
     }, []);
+
+    useEffect(() => {
+        if(userSlice.userInfo) {
+            setUser({
+                name: userSlice.userInfo.userName,
+                avatar: userSlice.userInfo.avatar,
+                status: 'online'
+            });
+        }
+    }, [userSlice.userInfo]);
 
     const menuItems = [
         { key: 'profile', icon: <UserOutlined />, label: '个人信息' },
