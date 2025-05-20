@@ -23,7 +23,7 @@ import {
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import {useAppDispatch, useAppSelector} from "../../stores/StoreHook.ts";
-import {getUserBaseInfo, updateUserAvatar} from "../../api/userApi.ts";
+import {getUserBaseInfo, updateUserAvatar} from "../../api/UserApi.ts";
 import {setUserInfo} from "../../stores/slices/userSlices.ts";
 
 const { Title, Text } = Typography;
@@ -85,6 +85,10 @@ const UserProfile = () => {
                 ...userSlice.userInfo,
                 password: '••••••••••',
             })
+            form.setFieldsValue({
+                userName: userSlice.userInfo.userName,
+                email: userSlice.userInfo.email
+            });
         }
     }, []);
 
@@ -110,19 +114,6 @@ const UserProfile = () => {
         try {
             setLoading(true);
             const values = await form.validateFields();
-
-            // 模拟后端验证旧密码
-            if (changePassword) {
-                const oldPassword = values.oldPassword;
-                // 这里应该是实际的API调用来验证旧密码
-                // 模拟密码验证失败的情况
-                const mockCorrectOldPassword = "123456"; // 假设这是正确的旧密码
-                if (oldPassword !== mockCorrectOldPassword) {
-                    message.error('旧密码不正确');
-                    setLoading(false);
-                    return;
-                }
-            }
 
             // 这里应该是API调用来更新用户信息
             setTimeout(() => {

@@ -1,5 +1,5 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import type {UserBaseType} from "../../api/userApi.ts";
+import type {UserBaseType} from "../../api/UserApi.ts";
 
 export interface userSliceType {
     isSignedIn: boolean

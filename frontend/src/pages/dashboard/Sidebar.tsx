@@ -26,7 +26,7 @@ import {useLogto} from "@logto/react";
 import {env} from "../../env.ts";
 import {useAppDispatch, useAppSelector} from "../../stores/StoreHook.ts";
 import {clearUserInfo, setLogoutStatus, setUserInfo} from "../../stores/slices/userSlices.ts";
-import {getUserBaseInfo, type UserBaseType} from "../../api/userApi.ts";
+import {getUserBaseInfo, type UserBaseType} from "../../api/UserApi.ts";
 
 const { Sider } = Layout;
 const { Text } = Typography;

@@ -6,7 +6,7 @@ import React from "react";
 import FullScreenLoading from "../components/universalTool/FullScreenLoading.tsx";
 import {useAppDispatch} from "../stores/StoreHook.ts";
 import {setLoginStatus} from "../stores/slices/userSlices.ts";
-import {getUserBaseInfo} from "../api/userApi.ts";
+import {getUserBaseInfo} from "../api/UserApi.ts";
 
 
 const Callback: React.FC = () => {
