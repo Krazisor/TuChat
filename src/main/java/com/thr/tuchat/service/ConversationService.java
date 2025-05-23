@@ -18,11 +18,10 @@ public class ConversationService {
 
 
     /**
-     * TODO: 其实这里不需要提供userId，但是需要前后端一起改，待定
      * @param userId 用户ID
      * @return List<Conversation>
      */
-    public List<Conversation> getConversationByUserId(String userId) {
+    public List<Conversation> getConversationByUserId_Safe(String userId) {
         try {
             String loginIdAsString = StpUtil.getLoginIdAsString();
             if (Objects.equals(loginIdAsString, userId)) {

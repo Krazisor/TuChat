@@ -23,7 +23,7 @@ public class ConversationController {
     public ResponseResult<List<Conversation>> getConversationByUserId () {
         try {
             String userId = StpUtil.getLoginIdAsString();
-            List<Conversation> conversationList = conversationService.getConversationByUserId(userId);
+            List<Conversation> conversationList = conversationService.getConversationByUserId_Safe(userId);
             return ResponseResult.success(conversationList);
         } catch (Exception e) {
             return ResponseResult.fail(e.getMessage());
