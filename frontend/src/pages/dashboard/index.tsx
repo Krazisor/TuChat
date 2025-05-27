@@ -64,7 +64,7 @@ const Dashboard = () => {
                     </Title>
                 </Header>
                 <Content style={{
-                    margin: '24px 16px',
+                    margin: '8px 0 0 8px',
                     padding: 24,
                     background: '#fff',
                     borderRadius: '4px',

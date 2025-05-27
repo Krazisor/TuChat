@@ -24,7 +24,7 @@ public class MessageService {
     public List<Message> getAllMessageByConversationId (String conversationId) {
         try {
             String userId = StpUtil.getLoginIdAsString();
-            Conversation conversation = conversationService.getConversationById(userId);
+            Conversation conversation = conversationService.getConversationById(conversationId);
             if (Objects.equals(userId, conversation.getUserId())) {
                 return messageMapper.getAllMessageByConversationId(conversationId);
             } else {

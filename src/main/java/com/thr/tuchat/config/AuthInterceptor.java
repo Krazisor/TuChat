@@ -1,7 +1,7 @@
 package com.thr.tuchat.config;
 
-import cn.dev33.satoken.apikey.SaApiKeyUtil;
 import cn.dev33.satoken.apikey.model.ApiKeyModel;
+import cn.dev33.satoken.apikey.template.SaApiKeyUtil;
 import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.stp.StpUtil;
 import jakarta.servlet.http.HttpServletRequest;
