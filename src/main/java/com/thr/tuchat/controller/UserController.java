@@ -1,6 +1,7 @@
 package com.thr.tuchat.controller;
 
 
+import cn.dev33.satoken.annotation.SaCheckLogin;
 import cn.dev33.satoken.stp.StpUtil;
 import com.thr.tuchat.pojo.ResponseResult;
 import com.thr.tuchat.pojo.User;
@@ -23,6 +24,7 @@ public class UserController {
     @Resource
     private UserService userService;
 
+    @SaCheckLogin
     @GetMapping("/getInfo")
     public ResponseResult<User> getUserInfo () {
         try {
@@ -35,6 +37,7 @@ public class UserController {
         }
     }
 
+    @SaCheckLogin
     @PostMapping("/updateAvatar")
     public ResponseResult<String> updateUserAvatar (@RequestParam("file") MultipartFile file) {
         try {

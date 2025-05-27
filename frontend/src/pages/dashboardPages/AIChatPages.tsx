@@ -12,7 +12,7 @@ import {
     StarOutlined,
 } from '@ant-design/icons';
 import type {MenuProps, UploadFile} from 'antd';
-import {getConversationList} from "../../api/ConversationApi.ts";
+import {addNewConversation, type ConversationBaseType, getConversationList} from "../../api/ConversationApi.ts";
 import type {Conversation} from '@ant-design/x/es/conversations/interface';
 import {getMessageListByConversationId} from "../../api/MessageApi.ts";
 import {type AIRequestDTO, fetchAIResponseStream} from "../../api/FetchStream.ts";
@@ -181,27 +181,27 @@ const AIChatPages: React.FC = () => {
     };
 
     // 创建新话题
-    const handleCreateTopic = (): void => {
+    const handleCreateTopic = async (): Promise<void> => {
         if (!isCreatingTopic) {
             setIsCreatingTopic(true);
             return;
         }
-
         if (!newTopicTitle.trim()) {
             setIsCreatingTopic(false);
             return;
         }
-
-        // const newTopic: Topic = {
-        //     id: `topic-${Date.now()}`,
-        //     title: newTopicTitle,
-        //     lastMessage: '',
-        //     createTime: Date.now()
-        // };
-
-        // setTopics(prev => [newTopic, ...prev]);
-        // setActiveTopic(newTopic.id);
-        // setMessages(prev => ({...prev, [newTopic.id]: []}));
+        let conversationId = await addNewConversation(newTopicTitle);
+        let conversationList = await getConversationList();
+        setConversation(
+            conversationList!.map(item => ({
+                key: item.conversationId,
+                label: item.title,
+                icon: <StarOutlined style={{color: '#bbbbbb'}}/>,
+                timestamp: Number(item.createTime)
+            }))
+        )
+        setActiveTopic(conversationId as string);
+        await handleActiveChange(conversationId as string)
         setIsCreatingTopic(false);
         setNewTopicTitle('');
     };
@@ -377,9 +377,9 @@ const AIChatPages: React.FC = () => {
                             menu={menuConfig}
                             items={conversation}
                             activeKey={activeTopic}
-                            onActiveChange={(v) => {
+                            onActiveChange={async (v) => {
                                 setActiveTopic(v);
-                                handleActiveChange(v);
+                                await handleActiveChange(v);
                             }}
                             style={{padding: '0'}}
                         />

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 @Service
 public class ConversationService {
@@ -53,6 +54,18 @@ public class ConversationService {
             return conversationMapper.getUserIdByConversationId(conversationId);
         } catch (Exception e) {
             throw new RuntimeException("getUserIdByConversationId出现了意料之外的错误" + e.getMessage());
+        }
+    }
+
+    public String addNewConversation (String title) {
+        try {
+            String userId = StpUtil.getLoginIdAsString();
+            String conversationId = UUID.randomUUID().toString();
+            Conversation conversation = new Conversation(conversationId, userId, title, null, false);
+            conversationMapper.addNewConversation(conversation);
+            return conversationId;
+        } catch (Exception e) {
+            throw new RuntimeException("addNewConversation出现了意料之外的错误" + e.getMessage());
         }
     }
 }

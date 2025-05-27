@@ -1,5 +1,6 @@
 package com.thr.tuchat.controller;
 
+import cn.dev33.satoken.annotation.SaCheckLogin;
 import cn.dev33.satoken.util.SaResult;
 import com.thr.tuchat.pojo.ResponseResult;
 import com.thr.tuchat.service.MinioService;
@@ -19,6 +20,7 @@ public class MinioController {
     @Resource
     private MinioService minioService;
 
+    @SaCheckLogin
     @PostMapping("/upload")
     public ResponseResult<String> uploadFile(@RequestParam("file") MultipartFile file) {
         try {

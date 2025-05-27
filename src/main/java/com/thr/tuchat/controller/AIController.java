@@ -1,6 +1,7 @@
 package com.thr.tuchat.controller;
 
 
+import cn.dev33.satoken.annotation.SaCheckLogin;
 import cn.dev33.satoken.context.mock.SaTokenContextMockUtil;
 import com.thr.tuchat.dto.AIRequestDTO;
 import com.thr.tuchat.service.AIService;
@@ -21,6 +22,7 @@ public class AIController {
     @Resource
     private AIService aiService;
 
+    @SaCheckLogin
     @PostMapping(value = "/getAIResponse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> getAIResponse (@RequestBody AIRequestDTO aiRequestDTO) {
         try {

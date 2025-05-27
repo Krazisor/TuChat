@@ -1,5 +1,6 @@
 package com.thr.tuchat.controller;
 
+import cn.dev33.satoken.annotation.SaCheckLogin;
 import com.thr.tuchat.pojo.Message;
 import com.thr.tuchat.pojo.ResponseResult;
 import com.thr.tuchat.service.MessageService;
@@ -20,6 +21,7 @@ public class MessageController {
     @Resource
     private MessageService messageService;
 
+    @SaCheckLogin
     @GetMapping("/list")
     public ResponseResult<List<Message>> getListMessageByConversationId(@RequestParam String conversationId) {
         try {
