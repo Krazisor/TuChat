@@ -17,4 +17,5 @@ public class Message {
     private String content;
     private Timestamp createTime;
     private String errorMessage;
+    private String attachment;
 }

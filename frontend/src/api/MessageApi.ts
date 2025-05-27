@@ -5,7 +5,8 @@ export interface MessageBaseType {
     conversationId: string,
     role: string,
     content: string,
-    createTime: string
+    createTime: string,
+    attachment: string
 }
 
 export const getMessageListByConversationId = async (conversationId: string): Promise<MessageBaseType[]> => {

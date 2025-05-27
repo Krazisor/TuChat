@@ -15,4 +15,7 @@ public interface ConversationMapper {
 
     @Select("select * from tuchat.conversation where conversation_id = #{conversationId}")
     Conversation getConversationById (String conversationId);
+
+    @Select("select user_id from tuchat.conversation where conversation_id = #{conversationId}")
+    String getUserIdByConversationId (String conversationId);
 }

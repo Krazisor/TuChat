@@ -300,6 +300,7 @@ const AIChatPages: React.FC = () => {
                                             content={message.content}
                                             style={{marginBottom: '16px'}}
                                             placement={message.role === 'user' ? 'end' : 'start'}
+                                            loading={!message.content}
                                         >
                                             {message.attachments && message.attachments.length > 0 && (
                                                 <div style={{marginTop: '10px'}}>

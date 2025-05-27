@@ -7,11 +7,13 @@ import com.thr.tuchat.pojo.Conversation;
 import com.thr.tuchat.pojo.Message;
 import com.thr.tuchat.pojo.User;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Objects;
 
+@Slf4j
 @Service
 public class MessageService {
 
@@ -32,6 +34,14 @@ public class MessageService {
             }
         } catch (Exception e) {
             throw new RuntimeException("getAllMessageByConversationId发生异常:"+ e.getMessage());
+        }
+    }
+
+    public void addNewMessage (Message message) {
+        try {
+            messageMapper.addNewMessage(message);
+        } catch (Exception e) {
+            throw new RuntimeException("addNewMessage发生异常:"+ e.getMessage());
         }
     }
 }

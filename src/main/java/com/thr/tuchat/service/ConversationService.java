@@ -47,4 +47,12 @@ public class ConversationService {
             throw new RuntimeException("getConversationById出现了意料之外的错误" + e.getMessage());
         }
     }
+
+    public String getUserIdByConversationId (String conversationId) {
+        try {
+            return conversationMapper.getUserIdByConversationId(conversationId);
+        } catch (Exception e) {
+            throw new RuntimeException("getUserIdByConversationId出现了意料之外的错误" + e.getMessage());
+        }
+    }
 }
