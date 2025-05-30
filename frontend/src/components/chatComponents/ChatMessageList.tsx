@@ -74,10 +74,10 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({messages, messagesEndR
                             </ThemeProvider>
                         ),
                         loading: !message.content,
-                        placement: message.role === 'user' ? 'end' : 'start',
+                        placement: (message.role === 'user' ? 'end' : 'start') as 'end' | 'start',
                         styles: {
                             content: {
-                                minHeight: '10px'
+                                minHeight: '30px'
                             }
                         }
                     }))}
