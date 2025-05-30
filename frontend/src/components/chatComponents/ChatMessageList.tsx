@@ -1,9 +1,8 @@
-import React, {type RefObject} from 'react';
+import React, {memo, type RefObject} from 'react';
+import type {UploadFile} from 'antd';
 import {Empty} from 'antd';
 import {Bubble} from '@ant-design/x';
-import {FileTextOutlined} from '@ant-design/icons';
 import {Markdown, type MarkdownProps, ThemeProvider} from '@lobehub/ui';
-import type {UploadFile} from 'antd';
 
 export interface Message {
     id: string;
@@ -53,7 +52,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({messages, messagesEndR
                                 <Markdown
                                     {...options}
                                     animated={true}
-                                    children={message.content}  />
+                                    children={message.content}/>
                                 {/*/!* 附件展示（如果有） *!/*/}
                                 {/*{message.attachments && message.attachments.length > 0 && (*/}
                                 {/*    <div style={{marginTop: '10px'}}>*/}
@@ -82,12 +81,12 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({messages, messagesEndR
                         }
                     }))}
                 />
-                <div ref={messagesEndRef} />
+                <div ref={messagesEndRef}/>
             </>
         ) : (
-            <Empty description="选择一个话题开始对话" style={{top: '40%', position: 'relative'}} />
+            <Empty description="选择一个话题开始对话" style={{top: '40%', position: 'relative'}}/>
         )}
     </div>
 );
 
-export default ChatMessageList;
+export default memo(ChatMessageList);
