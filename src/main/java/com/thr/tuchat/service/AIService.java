@@ -94,13 +94,16 @@ public class AIService {
 
             return aiFlux
                     .concatMap(token -> {
-                        // 转换token所有字符为Flux<String>
                         List<String> chars = new ArrayList<>();
-                        for (char ch : token.toCharArray()) {
-                            if (ch == ' ') chars.add("[[SPACE]]");
-                            else if (ch == '\n' || ch == '\r') chars.add("[[LINEBREAKS]]"); // 换行为SSE兼容
-                            else chars.add(String.valueOf(ch));
-                        }
+                        token.codePoints().forEach(cp -> {
+                            if (cp == ' ') {
+                                chars.add("[[SPACE]]");
+                            } else if (cp == '\n' || cp == '\r') {
+                                chars.add("[[LINEBREAKS]]");
+                            } else {
+                                chars.add(new String(Character.toChars(cp)));
+                            }
+                        });
                         return Flux.fromIterable(chars);
                     })
                     .doOnNext(charToken -> {
