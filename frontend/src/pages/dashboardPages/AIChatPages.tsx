@@ -1,22 +1,23 @@
-import React, {useState, useRef, useEffect} from 'react';
-import {Divider, Flex, type GetProp, Splitter, theme} from 'antd';
-import {Bubble, Conversations, Sender, Attachments, type ConversationsProps} from '@ant-design/x';
-import {CloudUploadOutlined, LinkOutlined} from '@ant-design/icons';
-import {Card, Empty, Typography, Button, Input, Space, List, Avatar, Dropdown, Upload, message} from 'antd';
+import React, {useEffect, useRef, useState} from 'react';
+import type {UploadFile} from 'antd';
+import {Button, Card, Divider, Empty, Flex, Input, message, Splitter, theme, Typography, Upload} from 'antd';
+import {Bubble, Conversations, type ConversationsProps, Sender} from '@ant-design/x';
 import {
-    PlusOutlined,
+    CloudUploadOutlined,
     DeleteOutlined,
     EditOutlined,
-    StopOutlined,
     FileTextOutlined,
+    LinkOutlined,
+    PlusOutlined,
     StarOutlined,
+    StopOutlined
 } from '@ant-design/icons';
-import type {MenuProps, UploadFile} from 'antd';
-import {addNewConversation, type ConversationBaseType, getConversationList} from "../../api/ConversationApi.ts";
+import {addNewConversation, getConversationList} from "../../api/ConversationApi.ts";
 import type {Conversation} from '@ant-design/x/es/conversations/interface';
 import {getMessageListByConversationId} from "../../api/MessageApi.ts";
 import {type AIRequestDTO, fetchAIResponseStream} from "../../api/FetchStream.ts";
 import dayjs from "dayjs";
+import {Markdown} from '@lobehub/ui';
 
 const {Title, Text} = Typography;
 const {Dragger} = Upload;
@@ -297,7 +298,26 @@ const AIChatPages: React.FC = () => {
                                     {messages?.map((message) => (
                                         <Bubble
                                             key={message.id}
-                                            content={message.content}
+                                            content={(
+                                                <Markdown
+                                                    animated={true}
+                                                    fontSize={14}
+                                                    fullFeaturedCodeBlock={true}
+                                                    children={message.content}
+                                                    allowHtml={true}
+                                                    style={{fontFamily: "sans-serif"}}
+                                                    componentProps={{
+
+                                                        highlight: {
+
+                                                            style: {
+                                                                fontFamily: 'serif',
+
+                                                            }
+                                                        },
+
+                                                    }}
+                                                />)}
                                             style={{marginBottom: '16px'}}
                                             placement={message.role === 'user' ? 'end' : 'start'}
                                             loading={!message.content}

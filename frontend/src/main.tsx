@@ -8,6 +8,7 @@ import {logtoConfig} from "./config/LogtoConfig.ts";
 import {PersistGate} from "redux-persist/integration/react";
 import {Provider} from "react-redux";
 import store, {persistor} from "./stores/BaseStore.ts";
+import '@ant-design/v5-patch-for-react-19';
 
 createRoot(document.getElementById('root')!).render(
     <Provider store={store}>

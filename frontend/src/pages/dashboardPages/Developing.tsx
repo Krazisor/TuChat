@@ -280,7 +280,6 @@ const Developing: React.FC = () => {
                 right: '20px',
                 color: 'rgba(255, 255, 255, 0.15)',
                 fontSize: '0.8rem',
-                fontFamily: 'monospace',
                 letterSpacing: '0.1em',
             }}>
                 {new Date().toLocaleTimeString('en-US', {
