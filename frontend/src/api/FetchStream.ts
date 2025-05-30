@@ -33,10 +33,13 @@ export async function fetchAIResponseStream(
 
         const reader = response.body.getReader();
         const parser = createParser({
-            onEvent:(event) => {
-                if (event.data === '') {
+            onEvent: (event) => {
+                if (event.data === '[[LINEBREAKS]]') {
                     // 空data行转换为换行符
                     onMessage('\n');
+                } else if (event.data === '[[SPACE]]') {
+                    // 特殊标识符转换为空格
+                    onMessage(' ');
                 } else if (event.data) {
                     // 正常数据传递
                     onMessage(event.data);

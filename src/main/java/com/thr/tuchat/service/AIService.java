@@ -93,7 +93,26 @@ public class AIService {
             AtomicReference<StringBuilder> replyBuilder = new AtomicReference<>(new StringBuilder());
 
             return aiFlux
-                    .doOnNext(token -> replyBuilder.get().append(token))
+                    .concatMap(token -> {
+                        // 转换token所有字符为Flux<String>
+                        List<String> chars = new ArrayList<>();
+                        for (char ch : token.toCharArray()) {
+                            if (ch == ' ') chars.add("[[SPACE]]");
+                            else if (ch == '\n' || ch == '\r') chars.add("[[LINEBREAKS]]"); // 换行为SSE兼容
+                            else chars.add(String.valueOf(ch));
+                        }
+                        return Flux.fromIterable(chars);
+                    })
+                    .doOnNext(charToken -> {
+                        // 拼接入库内容，遇到[[SPACE]]还原成空格
+                        if ("[[SPACE]]".equals(charToken)) {
+                            replyBuilder.get().append(" ");
+                        } else if ("[[LINEBREAKS]]".equals(charToken)) {
+                            replyBuilder.get().append("\n");
+                        } else {
+                            replyBuilder.get().append(charToken);
+                        }
+                    })
                     .doOnComplete(() -> {
                         log.info("AI回复数据#{}", replyBuilder.get().toString());
                         // 入库AI消息

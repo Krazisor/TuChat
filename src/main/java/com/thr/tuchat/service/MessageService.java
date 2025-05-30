@@ -39,6 +39,7 @@ public class MessageService {
 
     public void addNewMessage (Message message) {
         try {
+            log.info("message存入数据库：{}", message);
             messageMapper.addNewMessage(message);
         } catch (Exception e) {
             throw new RuntimeException("addNewMessage发生异常:"+ e.getMessage());
