@@ -29,7 +29,7 @@ const options: MarkdownProps | any = {
     fullFeaturedCodeBlock: true,
     headerMultiple: 1,
     lineHeight: 1.5,
-    marginMultiple: 1.5,
+    marginMultiple: 1.0,
 }
 
 // 微软风格配色
@@ -101,7 +101,8 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({messages, messagesEndR
                             placement: (message.role === 'user' ? 'end' : 'start') as 'end' | 'start',
                             styles: {
                                 content: {
-                                    minHeight: '30px'
+                                    minHeight: '30px',
+                                    background: 'white'
                                 }
                             }
                         }))}
