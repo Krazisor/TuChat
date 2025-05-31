@@ -10,7 +10,7 @@ import java.util.List;
 @Mapper
 public interface MessageMapper {
 
-    @Select("select * from tuchat.message where conversation_id = #{conversationId}")
+    @Select("select * from tuchat.message where conversation_id = #{conversationId} order by create_time")
     List<Message> getAllMessageByConversationId (String conversationId);
 
     @Insert("insert into tuchat.message (conversation_id, role, content, error_message, attachment) " +
