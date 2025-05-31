@@ -26,8 +26,20 @@ const TopicSidebar: React.FC<TopicSidebarProps> = ({
                                                    }) => (
     <Card
         title="话题管理"
-        style={{height: '100%', overflow: 'auto', borderRadius: '0'}}
-        styles={{body: {padding: '15px'}}}
+        style={{
+            height: '100%',
+            borderRadius: '0',
+            display: 'flex',
+            flexDirection: 'column'
+        }}
+        styles={{
+            body: {
+                padding: '0px',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden' // 防止Card内容溢出
+            }
+        }}
         extra={
             <Button
                 type="primary"
@@ -39,7 +51,7 @@ const TopicSidebar: React.FC<TopicSidebarProps> = ({
         }
     >
         {isCreatingTopic && (
-            <div style={{marginBottom: '16px'}}>
+            <div style={{flexShrink: 0, padding: '10px'}}>
                 <Input
                     placeholder="输入话题标题"
                     value={newTopicTitle}
@@ -49,13 +61,14 @@ const TopicSidebar: React.FC<TopicSidebarProps> = ({
                 />
             </div>
         )}
-        <Conversations
-            menu={menuConfig}
-            items={conversations}
-            activeKey={activeTopic}
-            onActiveChange={onActiveChange}
-            style={{padding: '0'}}
-        />
+        <div style={{flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column'}}>
+            <Conversations
+                menu={menuConfig}
+                items={conversations}
+                activeKey={activeTopic}
+                onActiveChange={onActiveChange}
+            />
+        </div>
     </Card>
 );
 
