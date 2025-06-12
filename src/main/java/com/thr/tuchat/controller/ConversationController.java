@@ -3,6 +3,7 @@ package com.thr.tuchat.controller;
 
 import cn.dev33.satoken.annotation.SaCheckLogin;
 import cn.dev33.satoken.stp.StpUtil;
+import com.thr.tuchat.exception.ServiceDeniedException;
 import com.thr.tuchat.pojo.Conversation;
 import com.thr.tuchat.pojo.ResponseResult;
 import com.thr.tuchat.service.ConversationService;
@@ -44,7 +45,7 @@ public class ConversationController {
         if (conversationService.deleteConversationWithMessage(conversationId)) {
             return ResponseResult.success(true);
         } else {
-            throw new RuntimeException("无法删除对话以及对话信息");
+            throw new ServiceDeniedException("无法删除对话以及对话信息");
         }
 
     }
@@ -56,7 +57,7 @@ public class ConversationController {
         if (conversationService.updateConversationById(conversation)) {
             return ResponseResult.success(true);
         } else {
-            throw new RuntimeException("无法更改会话信息");
+            throw new ServiceDeniedException("无法更改会话信息");
         }
     }
 }
