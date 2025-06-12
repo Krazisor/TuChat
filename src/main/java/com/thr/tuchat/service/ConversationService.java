@@ -6,20 +6,20 @@ import com.thr.tuchat.mapper.ConversationMapper;
 import com.thr.tuchat.pojo.Conversation;
 import com.thr.tuchat.pojo.User;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class ConversationService {
 
     @Resource
     private ConversationMapper conversationMapper;
-
-    @Resource
-    private MessageService messageService;
 
     @Resource
     private UserService userService;
@@ -65,15 +65,9 @@ public class ConversationService {
     }
 
     @Transactional
-    public boolean deleteConversationWithMessage(String conversationId) {
-        String userId = StpUtil.getLoginIdAsString();
-        String conversationOwnerId = getUserIdByConversationId(conversationId);
-        if (!Objects.equals(userId, conversationOwnerId)) {
-            throw new ServiceDeniedException("用户无权删除该会话");
-        }
-        messageService.deleteMessagesByConversationId(conversationId);
+    public void deleteConversationById(String conversationId) {
+        log.info("用户删除会话信息：{}", conversationId);
         conversationMapper.deleteConversationById(conversationId);
-        return true;
     }
 
     public boolean updateConversationById(Conversation conversation) {

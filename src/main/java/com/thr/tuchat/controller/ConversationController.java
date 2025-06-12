@@ -6,6 +6,7 @@ import cn.dev33.satoken.stp.StpUtil;
 import com.thr.tuchat.exception.ServiceDeniedException;
 import com.thr.tuchat.pojo.Conversation;
 import com.thr.tuchat.pojo.ResponseResult;
+import com.thr.tuchat.service.ConversationManageService;
 import com.thr.tuchat.service.ConversationService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,9 @@ public class ConversationController {
 
     @Resource
     private ConversationService conversationService;
+
+    @Resource
+    private ConversationManageService conversationManageService;
 
     @SaCheckLogin
     @GetMapping("/list")
@@ -42,7 +46,7 @@ public class ConversationController {
     @GetMapping("/delete")
     public ResponseResult<Boolean> deleteConversationWithMessage(@RequestParam String conversationId) {
         log.info("用户删除会话以及对话信息,#{}", conversationId);
-        if (conversationService.deleteConversationWithMessage(conversationId)) {
+        if (conversationManageService.deleteConversationWithMessage(conversationId)) {
             return ResponseResult.success(true);
         } else {
             throw new ServiceDeniedException("无法删除对话以及对话信息");
