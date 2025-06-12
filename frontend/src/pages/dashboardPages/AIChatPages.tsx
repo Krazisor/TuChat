@@ -22,7 +22,7 @@ const {Title} = Typography;
 const AIChatPages: React.FC = () => {
     // --- State 定义 ---
     const [messages, setMessages] = useState<Message[]>([]);
-    const [activeTopic, setActiveTopic] = useState<string | undefined>(undefined);
+    const [activeTopic, setActiveTopic] = useState<string>('');
     const [input, setInput] = useState<string>('');
     const [isCreatingTopic, setIsCreatingTopic] = useState<boolean>(false);
     const [newTopicTitle, setNewTopicTitle] = useState<string>('');
@@ -210,7 +210,7 @@ const AIChatPages: React.FC = () => {
                             </Title>
                         </div>
                         <Divider style={{margin: '0', background: '#eeeeee', height: '2px'}}/>
-                        <ChatMessageList messages={messages} messagesEndRef={messagesEndRef} />
+                        <ChatMessageList messages={messages} messagesEndRef={messagesEndRef} activeTopic={activeTopic} />
                         <ChatSender
                             input={input}
                             onInputChange={setInput}

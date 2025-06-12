@@ -21,6 +21,7 @@ interface FileItem extends UploadFile {
 interface ChatMessageListProps {
     messages: Message[];
     messagesEndRef: RefObject<HTMLDivElement>;
+    activeTopic: string;
 }
 
 const options: MarkdownProps | any = {
@@ -41,11 +42,11 @@ const colors = {
     lightGreen: '#e8f1e8'
 };
 
-const ChatMessageList: React.FC<ChatMessageListProps> = ({messages, messagesEndRef}) => {
+const ChatMessageList: React.FC<ChatMessageListProps> = ({messages, messagesEndRef, activeTopic}) => {
     const userInfo = useAppSelector(state => state.user.userInfo)
     return (
         <div style={{flex: 1, padding: '20px', overflow: 'auto', backgroundColor: '#f8f8f8'}}>
-            {messages && messages.length > 0 ? (
+            {activeTopic && messages.length > 0 ? (
                 <>
                     <Bubble.List
                         autoScroll={false}
