@@ -22,13 +22,9 @@ public class MinioController {
 
     @SaCheckLogin
     @PostMapping("/upload")
-    public ResponseResult<String> uploadFile(@RequestParam("file") MultipartFile file) {
-        try {
-            log.info("用户正在上传文件#{}",file);
-            String URL = minioService.upload(file);
-            return ResponseResult.success(URL);
-        } catch (Exception e) {
-            return ResponseResult.fail(e.getMessage());
-        }
+    public ResponseResult<String> uploadFile(@RequestParam("file") MultipartFile file) throws Exception {
+        log.info("用户正在上传文件#{}", file);
+        String URL = minioService.upload(file);  // 这里有异常就抛出
+        return ResponseResult.success(URL);
     }
 }

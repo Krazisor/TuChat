@@ -3,6 +3,7 @@ package com.thr.tuchat.controller;
 import cn.dev33.satoken.stp.StpUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thr.tuchat.config.LogtoConfig;
+import com.thr.tuchat.exception.ServiceDeniedException;
 import com.thr.tuchat.pojo.ResponseResult;
 import com.thr.tuchat.pojo.User;
 import com.thr.tuchat.service.UserService;
@@ -67,13 +68,13 @@ public class AuthController {
             userService.saveOrUpdateUser(u);
             return ResponseResult.success(StpUtil.getTokenValue());
         } catch (SecurityException e) {
-            return ResponseResult.fail("令牌错误");
+            throw new ServiceDeniedException("令牌错误");
         } catch (ExpiredJwtException e) {
-            return ResponseResult.fail("令牌过期");
+            throw new ServiceDeniedException("令牌过期");
         } catch (JwtException e) {
-            return ResponseResult.fail("JWT 令牌解析失败");
+            throw new ServiceDeniedException("JWT 令牌解析失败");
         } catch (Exception e) {
-            return ResponseResult.fail(e.getMessage());
+            throw new ServiceDeniedException(e.getMessage());
         }
     }
 
@@ -127,7 +128,7 @@ public class AuthController {
             parameters.init(new ECGenParameterSpec("secp384r1"));
             return parameters.getParameterSpec(ECParameterSpec.class);
         } else {
-            throw new IllegalArgumentException("Unsupported curve: " + crv);
+            throw new ServiceDeniedException("Unsupported curve: " + crv);
         }
     }
 }

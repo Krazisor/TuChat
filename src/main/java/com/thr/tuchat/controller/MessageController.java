@@ -24,12 +24,8 @@ public class MessageController {
     @SaCheckLogin
     @GetMapping("/list")
     public ResponseResult<List<Message>> getListMessageByConversationId(@RequestParam String conversationId) {
-        try {
-            log.info("用户正在请求对话记录，会话ID:#{}", conversationId);
-            List<Message> messageList =  messageService.getAllMessageByConversationId(conversationId);
-            return ResponseResult.success(messageList);
-        } catch (Exception e) {
-            return ResponseResult.fail(e.getMessage());
-        }
+        log.info("用户正在请求对话记录，会话ID:#{}", conversationId);
+        List<Message> messageList = messageService.getAllMessageByConversationId(conversationId);
+        return ResponseResult.success(messageList);
     }
 }

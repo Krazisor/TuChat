@@ -1,6 +1,7 @@
 package com.thr.tuchat.service;
 
 import cn.dev33.satoken.stp.StpUtil;
+import com.thr.tuchat.exception.ServiceDeniedException;
 import com.thr.tuchat.mapper.UserMapper;
 import com.thr.tuchat.pojo.User;
 import io.minio.errors.*;
@@ -9,11 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 
 @Slf4j
 @Service
@@ -40,8 +36,9 @@ public class UserService {
         }
     }
 
-    public User getUserById(String userId) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException, URISyntaxException {
+    public User getUserById(String userId) {
         User user = userMapper.getUserById(userId);
+        // 拿到临时URL渲染头像
         String tempURL = minioService.getTemporaryURL(user.getAvatar());
         user.setAvatar(tempURL);
         return user;
@@ -49,19 +46,15 @@ public class UserService {
 
     @Transactional
     public String updateUserAvatar(MultipartFile file) {
-        try {
-            String URL = minioService.upload(file);
-            if (URL != null) {
-                String userId = StpUtil.getLoginIdAsString();
-                User user = getUserById(userId);
-                user.setAvatar(URL);
-                userMapper.updateUser(user);
-                return URL;
-            } else {
-                throw new RuntimeException("文件上传失败");
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        String URL = minioService.upload(file);
+        if (URL != null) {
+            String userId = StpUtil.getLoginIdAsString();
+            User user = getUserById(userId);
+            user.setAvatar(URL);
+            userMapper.updateUser(user);
+            return URL;
+        } else {
+            throw new ServiceDeniedException("文件上传失败,URL为空");
         }
     }
 
