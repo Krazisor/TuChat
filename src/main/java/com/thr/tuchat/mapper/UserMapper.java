@@ -8,12 +8,12 @@ import org.apache.ibatis.annotations.Update;
 
 @Mapper
 public interface UserMapper {
-    @Insert("INSERT INTO tuchat.user(user_id, user_name, email, avatar) VALUES (#{userId},#{userName},#{email},#{avatar})")
+    @Insert("INSERT INTO user(user_id, user_name, email, avatar) VALUES (#{userId},#{userName},#{email},#{avatar})")
     void addUser(User user);
 
-    @Select("SELECT * FROM tuchat.user WHERE user_id = #{userId}")
+    @Select("SELECT * FROM user WHERE user_id = #{userId}")
     User getUserById(String userId);
 
-    @Update("UPDATE tuchat.user SET user_name = #{userName}, email = #{email}, avatar = #{avatar} WHERE user_id = #{userId}")
+    @Update("UPDATE user SET user_name = #{userName}, email = #{email}, avatar = #{avatar} WHERE user_id = #{userId}")
     void updateUser(User user);
 }

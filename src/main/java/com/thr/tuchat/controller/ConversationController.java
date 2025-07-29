@@ -4,7 +4,7 @@ package com.thr.tuchat.controller;
 import cn.dev33.satoken.annotation.SaCheckLogin;
 import cn.dev33.satoken.stp.StpUtil;
 import com.thr.tuchat.pojo.Conversation;
-import com.thr.tuchat.pojo.ResponseResult;
+import com.thr.tuchat.common.ResponseResult;
 import com.thr.tuchat.service.ConversationService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;

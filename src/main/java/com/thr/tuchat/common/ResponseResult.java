@@ -1,4 +1,4 @@
-package com.thr.tuchat.pojo;
+package com.thr.tuchat.common;
 
 import com.thr.tuchat.constant.ResultCode;
 import lombok.Getter;

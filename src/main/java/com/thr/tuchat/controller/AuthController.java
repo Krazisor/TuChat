@@ -3,7 +3,7 @@ package com.thr.tuchat.controller;
 import cn.dev33.satoken.stp.StpUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thr.tuchat.config.LogtoConfig;
-import com.thr.tuchat.pojo.ResponseResult;
+import com.thr.tuchat.common.ResponseResult;
 import com.thr.tuchat.pojo.User;
 import com.thr.tuchat.service.UserService;
 import io.jsonwebtoken.*;

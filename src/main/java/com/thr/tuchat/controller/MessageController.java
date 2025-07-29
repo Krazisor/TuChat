@@ -2,7 +2,7 @@ package com.thr.tuchat.controller;
 
 import cn.dev33.satoken.annotation.SaCheckLogin;
 import com.thr.tuchat.pojo.Message;
-import com.thr.tuchat.pojo.ResponseResult;
+import com.thr.tuchat.common.ResponseResult;
 import com.thr.tuchat.service.MessageService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;

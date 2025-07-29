@@ -1,0 +1,30 @@
+CREATE DATABASE IF NOT EXISTS tu_chat;
+
+USE tu_chat;
+
+CREATE TABLE conversation (
+    conversation_id VARCHAR(64) PRIMARY KEY COMMENT '会话ID',
+    user_id VARCHAR(64) NOT NULL COMMENT '用户ID',
+    title VARCHAR(255) NOT NULL COMMENT '会话标题',
+    create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    is_marked BOOLEAN NOT NULL DEFAULT FALSE COMMENT '是否标记'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='会话表';
+
+CREATE TABLE message (
+    message_id INT AUTO_INCREMENT PRIMARY KEY COMMENT '消息ID',
+    conversation_id VARCHAR(64) NOT NULL COMMENT '所属会话ID',
+    role VARCHAR(32) NOT NULL COMMENT '发送方身份',
+    content TEXT COMMENT '消息内容',
+    create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    error_message VARCHAR(255) DEFAULT NULL COMMENT '错误信息',
+    attachment VARCHAR(512) DEFAULT NULL COMMENT '附件链接/信息',
+    KEY idx_conversation_id (conversation_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='消息表';
+
+CREATE TABLE user (
+    user_id VARCHAR(64) PRIMARY KEY COMMENT '用户ID',
+    user_name VARCHAR(64) NOT NULL COMMENT '用户名',
+    email VARCHAR(128) NOT NULL UNIQUE COMMENT '邮箱',
+    create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    avatar VARCHAR(255) DEFAULT NULL COMMENT '头像地址'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
