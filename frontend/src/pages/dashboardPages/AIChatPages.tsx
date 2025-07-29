@@ -8,7 +8,7 @@ import {
     StopOutlined
 } from '@ant-design/icons';
 
-import {addNewConversation, getConversationList} from "../../api/ConversationApi";
+import {addNewConversation, deleteConversation, getConversationList} from "../../api/ConversationApi";
 import {getMessageListByConversationId} from "../../api/MessageApi";
 import {fetchAIResponseStream} from "../../api/FetchStream";
 import dayjs from "dayjs";
@@ -76,10 +76,27 @@ const AIChatPages: React.FC = () => {
                 danger: true,
             },
         ],
-        onClick: (menuInfo: { domEvent: { stopPropagation: () => void; }; key: any; }) => {
+        onClick: async (menuInfo: { domEvent: { stopPropagation: () => void; }; key: any; }) => {
             menuInfo.domEvent.stopPropagation();
-            message.info(`Click ${conv.key} - ${menuInfo.key}`);
-            // TODO: 这里可以实现编辑/删除等逻辑
+            if (menuInfo.key === 'edit') {
+
+            }
+            if (menuInfo.key === 'delete') {
+                if (await deleteConversation(conv.key)) {
+                    message.success("删除成功")
+                } else {
+                    message.error("删除失败")
+                }
+            }
+            let conversationList = await getConversationList();
+            setConversation(
+                conversationList!.map(item => ({
+                    key: item.conversationId,
+                    label: item.title,
+                    icon: <StarOutlined style={{color: '#bbbbbb'}}/>,
+                    timestamp: Number(item.createTime)
+                }))
+            );
         },
     });
 

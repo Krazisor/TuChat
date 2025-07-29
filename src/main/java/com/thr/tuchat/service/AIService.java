@@ -87,6 +87,8 @@ public class AIService {
             ChatClient chatClient = ChatClient.builder(openAiChatModel).build();
             Flux<String> aiFlux = chatClient.prompt(prompt)
                     .user(aiRequestDTO.getQuestion())
+
+                    
                     .stream()
                     .content();
 
