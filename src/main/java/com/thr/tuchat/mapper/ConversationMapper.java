@@ -5,6 +5,7 @@ import com.thr.tuchat.pojo.Conversation;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
 
@@ -23,4 +24,7 @@ public interface ConversationMapper {
     @Insert("insert into conversation (conversation_id, user_id, title, is_marked)" +
             " values (#{conversationId}, #{userId}, #{title}, #{isMarked});")
     void addNewConversation (Conversation conversation);
+
+    @Update("update conversation set title = #{title} where conversation_id = #{conversationId}")
+    void renameConversation (Conversation conversation);
 }

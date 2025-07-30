@@ -7,12 +7,15 @@ import com.thr.tuchat.exception.ThrowUtils;
 import com.thr.tuchat.mapper.ConversationMapper;
 import com.thr.tuchat.pojo.Conversation;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.units.qual.C;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class ConversationService {
 
@@ -49,7 +52,6 @@ public class ConversationService {
 
     public String addNewConversation(String title) {
         String userId = StpUtil.getLoginIdAsString();
-        ThrowUtils.throwIf(userId == null, ResultCode.NOT_LOGIN_ERROR, "用户未登录");
         String conversationId = UUID.randomUUID().toString();
         ThrowUtils.throwIf(conversationId == null, ResultCode.OPERATION_ERROR,
                 "生成UUID失败");
@@ -57,4 +59,20 @@ public class ConversationService {
         conversationMapper.addNewConversation(conversation);
         return conversationId;
     }
+
+    public Boolean renameConversation(String conversationId, String newTitle) {
+        log.info("正在修改对话:{}, 将其重命名为: {}", conversationId, newTitle);
+        ThrowUtils.throwIf(conversationId == null || newTitle == null, ResultCode.PARAMS_ERROR,
+                "不存在的rename");
+        Conversation conversation = this.getConversationById(conversationId);
+        ThrowUtils.throwIf(Objects.isNull(conversation), ResultCode.NOT_FOUND_ERROR, "不存在的conversation");
+        String userId = StpUtil.getLoginIdAsString();
+        ThrowUtils.throwIf(Objects.equals(conversation.getUserId(), userId), ResultCode.NO_AUTH_ERROR,
+                "正在重命名不属于自己的conversation");
+        conversation.setTitle(newTitle);
+        conversationMapper.renameConversation(conversation);
+        return true;
+    }
+
+
 }
