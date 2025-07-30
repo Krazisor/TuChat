@@ -7,7 +7,6 @@ import com.thr.tuchat.exception.ThrowUtils;
 import com.thr.tuchat.mapper.MessageMapper;
 import com.thr.tuchat.pojo.Conversation;
 import com.thr.tuchat.pojo.Message;
-import com.thr.tuchat.pojo.User;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -36,5 +35,10 @@ public class MessageService {
     public void addNewMessage(Message message) {
         ThrowUtils.throwIf(Objects.isNull(message), ResultCode.PARAMS_ERROR, "未提供message");
         messageMapper.addNewMessage(message);
+    }
+
+    public void deleteMessagesByConversationId(String conversationId) {
+        log.info("删除conversationId:{}下的所有message", conversationId);
+        messageMapper.deleteMessagesByConversationId(conversationId);
     }
 }

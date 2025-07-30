@@ -18,3 +18,15 @@ export const addNewConversation = async (title: string) : Promise<String | null>
     const params = new URLSearchParams({ title }).toString();
     return await fetchAPI(`/conversation/add?${params}`, {})
 }
+
+export const deleteConversation = async (conversationId: string) : Promise<boolean | null> => {
+    const params = new URLSearchParams({conversationId}).toString();
+    return await fetchAPI(`/conversation/delete?${params}`, {})
+}
+
+export const updateConversation = async (conversation: ConversationBaseType) : Promise<boolean | null> => {
+    return await fetchAPI('/conversation/update', {
+        method: 'POST',
+        body: JSON.stringify(conversation)
+    })
+}

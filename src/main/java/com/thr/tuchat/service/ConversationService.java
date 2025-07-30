@@ -6,10 +6,12 @@ import com.thr.tuchat.exception.ResultCode;
 import com.thr.tuchat.exception.ThrowUtils;
 import com.thr.tuchat.mapper.ConversationMapper;
 import com.thr.tuchat.pojo.Conversation;
+import com.thr.tuchat.pojo.User;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.units.qual.C;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
@@ -73,6 +75,4 @@ public class ConversationService {
         conversationMapper.renameConversation(conversation);
         return true;
     }
-
-
 }

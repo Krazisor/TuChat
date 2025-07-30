@@ -5,6 +5,7 @@ import cn.dev33.satoken.context.mock.SaTokenContextMockUtil;
 import cn.dev33.satoken.stp.StpUtil;
 import com.thr.tuchat.constant.AIMessageType;
 import com.thr.tuchat.dto.AIRequestDTO;
+import com.thr.tuchat.exception.ServiceDeniedException;
 import com.thr.tuchat.pojo.Conversation;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -86,6 +87,8 @@ public class AIService {
             ChatClient chatClient = ChatClient.builder(openAiChatModel).build();
             Flux<String> aiFlux = chatClient.prompt(prompt)
                     .user(aiRequestDTO.getQuestion())
+
+                    
                     .stream()
                     .content();
 
@@ -93,7 +96,29 @@ public class AIService {
             AtomicReference<StringBuilder> replyBuilder = new AtomicReference<>(new StringBuilder());
 
             return aiFlux
-                    .doOnNext(token -> replyBuilder.get().append(token))
+                    .concatMap(token -> {
+                        List<String> chars = new ArrayList<>();
+                        token.codePoints().forEach(cp -> {
+                            if (cp == ' ') {
+                                chars.add("[[SPACE]]");
+                            } else if (cp == '\n' || cp == '\r') {
+                                chars.add("[[LINEBREAKS]]");
+                            } else {
+                                chars.add(new String(Character.toChars(cp)));
+                            }
+                        });
+                        return Flux.fromIterable(chars);
+                    })
+                    .doOnNext(charToken -> {
+                        // 拼接入库内容，遇到[[SPACE]]还原成空格
+                        if ("[[SPACE]]".equals(charToken)) {
+                            replyBuilder.get().append(" ");
+                        } else if ("[[LINEBREAKS]]".equals(charToken)) {
+                            replyBuilder.get().append("\n");
+                        } else {
+                            replyBuilder.get().append(charToken);
+                        }
+                    })
                     .doOnComplete(() -> {
                         log.info("AI回复数据#{}", replyBuilder.get().toString());
                         // 入库AI消息
@@ -109,8 +134,7 @@ public class AIService {
             aiMessage.setRole(AIMessageType.ASSISTANT.getRole());
             aiMessage.setContent(e.getMessage());
             messageService.addNewMessage(aiMessage);
-            throw new RuntimeException(e.getMessage());
+            throw new ServiceDeniedException(e.getMessage());
         }
-
     }
 }

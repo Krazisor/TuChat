@@ -25,4 +25,9 @@ class TuchatApplicationTests {
         response.doOnNext(System.out::print).blockLast(); // 简明调试用
     }
 
+    @Test
+    void testCPUCores () {
+        System.out.println(Runtime.getRuntime().availableProcessors());
+    }
+
 }

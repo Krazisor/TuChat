@@ -8,6 +8,7 @@ import com.thr.tuchat.exception.ResultCode;
 import com.thr.tuchat.exception.ThrowUtils;
 import com.thr.tuchat.pojo.Conversation;
 import com.thr.tuchat.common.ResponseResult;
+import com.thr.tuchat.service.ConversationManageService;
 import com.thr.tuchat.service.ConversationService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +24,9 @@ public class ConversationController {
 
     @Resource
     private ConversationService conversationService;
+
+    @Resource
+    private ConversationManageService conversationManageService;
 
     @SaCheckLogin
     @GetMapping("/list")
@@ -56,5 +60,4 @@ public class ConversationController {
                 conversationRenameRequest.getNewTitle());
         return ResponseResult.success(success);
     }
-
 }

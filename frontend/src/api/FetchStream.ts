@@ -1,5 +1,6 @@
 import {env} from "../env.ts";
 import store from "../stores/BaseStore.ts";
+import {createParser} from 'eventsource-parser';
 
 export const BASE_URL = env.VITE_APP_API_URL
 
@@ -31,24 +32,28 @@ export async function fetchAIResponseStream(
         }
 
         const reader = response.body.getReader();
-        const decoder = new TextDecoder('utf-8');
-        let partial = '';
+        const parser = createParser({
+            onEvent: (event) => {
+                if (event.data === '[[LINEBREAKS]]') {
+                    // 空data行转换为换行符
+                    onMessage('\n');
+                } else if (event.data === '[[SPACE]]') {
+                    // 特殊标识符转换为空格
+                    onMessage(' ');
+                } else if (event.data) {
+                    // 正常数据传递
+                    onMessage(event.data);
+                }
+            }
+        });
 
+        // 循环读取流数据
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
-            partial += decoder.decode(value, { stream: true });
 
-            // 按行分割处理
-            let lines = partial.split('\n');
-            partial = lines.pop()!; // 保留最后一行残余数据
-
-            for (const line of lines) {
-                if (line.trim() === '') continue;
-                // 移除SSE格式前缀 "data: "
-                const msg = line.replace(/^data:\s*/i, '');
-                onMessage(msg);
-            }
+            // 喂数据到解析器，它会自动处理SSE格式并触发回调
+            parser.feed(new TextDecoder().decode(value));
         }
     } catch (err) {
         if (onError) onError(err);
