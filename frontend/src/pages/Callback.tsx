@@ -20,6 +20,7 @@ const Callback: React.FC = () => {
                 const userId = claims.sub;
                 const token = await getAccessToken(BASE_URL)
                 const saToken = await loginToBE(token!)
+                console.log(saToken)
                 if (saToken) {
                     dispatch(setLoginStatus(saToken))
                     nav('/dashboard');

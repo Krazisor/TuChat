@@ -33,7 +33,7 @@ export const fetchAPI = async <T>(url: string, options?: RequestInit): Promise<T
         throw new Error("网络错误")
     }
     const result: Result<T> = await response.json();
-    if (result.code != 200) {
+    if (result.code != 0) {
         message.error(result.message);
         throw new Error(result.message)
     } else {

@@ -4,6 +4,7 @@ import cn.dev33.satoken.stp.StpUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thr.tuchat.config.LogtoConfig;
 import com.thr.tuchat.common.ResponseResult;
+import com.thr.tuchat.exception.ResultCode;
 import com.thr.tuchat.pojo.User;
 import com.thr.tuchat.service.UserService;
 import io.jsonwebtoken.*;
@@ -67,13 +68,13 @@ public class AuthController {
             userService.saveOrUpdateUser(u);
             return ResponseResult.success(StpUtil.getTokenValue());
         } catch (SecurityException e) {
-            return ResponseResult.fail("令牌错误");
+            return ResponseResult.fail(ResultCode.NO_AUTH_ERROR,"令牌错误");
         } catch (ExpiredJwtException e) {
-            return ResponseResult.fail("令牌过期");
+            return ResponseResult.fail(ResultCode.NO_AUTH_ERROR,"令牌过期");
         } catch (JwtException e) {
-            return ResponseResult.fail("JWT 令牌解析失败");
+            return ResponseResult.fail(ResultCode.NO_AUTH_ERROR,"JWT 令牌解析失败");
         } catch (Exception e) {
-            return ResponseResult.fail(e.getMessage());
+            return ResponseResult.fail(ResultCode.SYSTEM_ERROR,e.getMessage());
         }
     }
 

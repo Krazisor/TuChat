@@ -70,7 +70,7 @@ public class AIService {
 //        TODO:如下
 //        messages.add(new SystemMessage(systemPrompt));
             String userId = StpUtil.getLoginIdAsString();
-            List<Conversation> conversations = conversationService.getConversationByUserId_Safe(userId);
+            List<Conversation> conversations = conversationService.getConversationByUserId(userId);
             // 严格的权限控制，只有自己的conversation历史可以被获取
             if (conversations.stream().anyMatch(s -> s.getConversationId().equals(aiRequestDTO.getConversationId()))) {
                 List<com.thr.tuchat.pojo.Message> history = messageService.getAllMessageByConversationId(aiRequestDTO.getConversationId());

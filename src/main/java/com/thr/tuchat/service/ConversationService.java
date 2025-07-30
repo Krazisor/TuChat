@@ -2,6 +2,8 @@ package com.thr.tuchat.service;
 
 
 import cn.dev33.satoken.stp.StpUtil;
+import com.thr.tuchat.exception.ResultCode;
+import com.thr.tuchat.exception.ThrowUtils;
 import com.thr.tuchat.mapper.ConversationMapper;
 import com.thr.tuchat.pojo.Conversation;
 import jakarta.annotation.Resource;
@@ -22,50 +24,37 @@ public class ConversationService {
      * @param userId 用户ID
      * @return List<Conversation>
      */
-    public List<Conversation> getConversationByUserId_Safe(String userId) {
-        try {
-            String loginIdAsString = StpUtil.getLoginIdAsString();
-            if (Objects.equals(loginIdAsString, userId)) {
-                return conversationMapper.getConversationByUserId(userId);
-            } else {
-                throw new RuntimeException("用户提供了不属于自己的userId");
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("getConversationByUserId出现了意料之外的错误" + e.getMessage());
-        }
+    public List<Conversation> getConversationByUserId(String userId) {
+        ThrowUtils.throwIf(userId == null, ResultCode.PARAMS_ERROR, "未提供userId");
+        return conversationMapper.getConversationByUserId(userId);
     }
 
     public Conversation getConversationById(String conversationId) {
-        try {
-            String userId = StpUtil.getLoginIdAsString();
-            Conversation conversation = conversationMapper.getConversationById(conversationId);
-            if (Objects.equals(userId, conversation.getUserId())) {
-                return conversation;
-            } else {
-                throw new RuntimeException("用户索取了不属于自己的getConversationById");
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("getConversationById出现了意料之外的错误" + e.getMessage());
-        }
+        ThrowUtils.throwIf(conversationId == null, ResultCode.PARAMS_ERROR, "未提供conversationId");
+        String userId = StpUtil.getLoginIdAsString();
+        ThrowUtils.throwIf(userId == null, ResultCode.NOT_LOGIN_ERROR, "未获取到当前登录ID");
+        Conversation conversation = conversationMapper.getConversationById(conversationId);
+        ThrowUtils.throwIf(conversation == null, ResultCode.NOT_FOUND_ERROR, "不存在的conversation");
+        ThrowUtils.throwIf(!Objects.equals(userId, conversation.getUserId()), ResultCode.NO_AUTH_ERROR,
+                "用户获取了不属于自己的conversation");
+        return conversation;
     }
 
-    public String getUserIdByConversationId (String conversationId) {
-        try {
-            return conversationMapper.getUserIdByConversationId(conversationId);
-        } catch (Exception e) {
-            throw new RuntimeException("getUserIdByConversationId出现了意料之外的错误" + e.getMessage());
-        }
+    public String getUserIdByConversationId(String conversationId) {
+        ThrowUtils.throwIf(conversationId == null, ResultCode.PARAMS_ERROR, "未提供conversationId");
+        String userId = conversationMapper.getUserIdByConversationId(conversationId);
+        ThrowUtils.throwIf(userId == null, ResultCode.NOT_FOUND_ERROR, "无法找到对应的userId");
+        return userId;
     }
 
-    public String addNewConversation (String title) {
-        try {
-            String userId = StpUtil.getLoginIdAsString();
-            String conversationId = UUID.randomUUID().toString();
-            Conversation conversation = new Conversation(conversationId, userId, title, null, false);
-            conversationMapper.addNewConversation(conversation);
-            return conversationId;
-        } catch (Exception e) {
-            throw new RuntimeException("addNewConversation出现了意料之外的错误" + e.getMessage());
-        }
+    public String addNewConversation(String title) {
+        String userId = StpUtil.getLoginIdAsString();
+        ThrowUtils.throwIf(userId == null, ResultCode.NOT_LOGIN_ERROR, "用户未登录");
+        String conversationId = UUID.randomUUID().toString();
+        ThrowUtils.throwIf(conversationId == null, ResultCode.OPERATION_ERROR,
+                "生成UUID失败");
+        Conversation conversation = new Conversation(conversationId, userId, title, null, false);
+        conversationMapper.addNewConversation(conversation);
+        return conversationId;
     }
 }

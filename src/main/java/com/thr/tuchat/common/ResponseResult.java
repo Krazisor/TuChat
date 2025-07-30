@@ -1,6 +1,6 @@
 package com.thr.tuchat.common;
 
-import com.thr.tuchat.constant.ResultCode;
+import com.thr.tuchat.exception.ResultCode;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -31,29 +31,17 @@ public class ResponseResult<T> implements Serializable {
         return new ResponseResult<>(ResultCode.SUCCESS.getCode(), ResultCode.SUCCESS.getMessage(), data);
     }
 
-    public static <T> ResponseResult<T> success(String message, T data) {
-        return new ResponseResult<>(ResultCode.SUCCESS.getCode(), message, data);
+    public static <T> ResponseResult<T> fail(ResultCode code, String message) {
+        return new ResponseResult<>(code.getCode(), message, null);
     }
 
-    public static <T> ResponseResult<T> fail() {
-        return fail(ResultCode.FAIL.getMessage());
-    }
-
-    public static <T> ResponseResult<T> fail(String message) {
-        return new ResponseResult<>(ResultCode.FAIL.getCode(), message, null);
-    }
-
-    public static <T> ResponseResult<T> fail(int code, String message) {
-        return new ResponseResult<>(code, message, null);
-    }
-
-    public static <T> ResponseResult<T> fail(ResultCode resultCode) {
-        return new ResponseResult<>(resultCode.getCode(), resultCode.getMessage(), null);
+    public static <T> ResponseResult<T> fail(ResultCode errorCode) {
+        return new ResponseResult<>(errorCode.getCode(), errorCode.getMessage(), null);
     }
 
     // ====== 链式调用 ======
-    public ResponseResult<T> code(int code) {
-        this.setCode(code);
+    public ResponseResult<T> code(ResultCode code) {
+        this.setCode(code.getCode());
         return this;
     }
 

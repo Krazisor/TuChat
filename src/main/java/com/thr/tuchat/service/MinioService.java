@@ -33,7 +33,7 @@ public class MinioService {
      * @param url 永久链接
      * @return String 临时链接
      */
-    public String getTemporaryURL(String url) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException, URISyntaxException {
+    public String getTemporaryURL(String url) throws Exception {
         URL input = new URI(url).toURL();
         String protocol = input.getProtocol();
         String host = input.getHost();
@@ -42,7 +42,7 @@ public class MinioService {
         if (!base.toString().equals(minioConfig.getEndpoint())) {
             return url;
         } else {
-            String filePath = Optional.ofNullable(url)
+            String filePath = Optional.of(url)
                     .filter(u -> u.contains("/"))
                     .map(u -> u.substring(u.lastIndexOf('/') + 1))
                     .orElse("");

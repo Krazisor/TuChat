@@ -1,6 +1,9 @@
 package com.thr.tuchat.service;
 
 import cn.dev33.satoken.stp.StpUtil;
+import com.thr.tuchat.exception.BusinessException;
+import com.thr.tuchat.exception.ResultCode;
+import com.thr.tuchat.exception.ThrowUtils;
 import com.thr.tuchat.mapper.UserMapper;
 import com.thr.tuchat.pojo.User;
 import io.minio.errors.*;
@@ -14,6 +17,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -40,28 +44,30 @@ public class UserService {
         }
     }
 
-    public User getUserById(String userId) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException, URISyntaxException {
+    public User getUserById(String userId) {
         User user = userMapper.getUserById(userId);
-        String tempURL = minioService.getTemporaryURL(user.getAvatar());
-        user.setAvatar(tempURL);
-        return user;
+        try {
+            String tempURL = minioService.getTemporaryURL(user.getAvatar());
+            user.setAvatar(tempURL);
+            return user;
+        } catch (Exception e) {
+            throw new BusinessException(ResultCode.SYSTEM_ERROR, "无法获取临时URL");
+        }
     }
 
     @Transactional
     public String updateUserAvatar(MultipartFile file) {
         try {
             String URL = minioService.upload(file);
-            if (URL != null) {
-                String userId = StpUtil.getLoginIdAsString();
-                User user = getUserById(userId);
-                user.setAvatar(URL);
-                userMapper.updateUser(user);
-                return URL;
-            } else {
-                throw new RuntimeException("文件上传失败");
-            }
+            ThrowUtils.throwIf(URL == null, ResultCode.OPERATION_ERROR, "无法更新用户头像");
+            String userId = StpUtil.getLoginIdAsString();
+            User user = getUserById(userId);
+            ThrowUtils.throwIf(Objects.isNull(user), ResultCode.NOT_FOUND_ERROR, "不存在的用户");
+            user.setAvatar(URL);
+            userMapper.updateUser(user);
+            return URL;
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new BusinessException(ResultCode.SYSTEM_ERROR, "无法上传用户头像");
         }
     }
 

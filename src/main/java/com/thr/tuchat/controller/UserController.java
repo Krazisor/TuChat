@@ -4,6 +4,8 @@ package com.thr.tuchat.controller;
 import cn.dev33.satoken.annotation.SaCheckLogin;
 import cn.dev33.satoken.stp.StpUtil;
 import com.thr.tuchat.common.ResponseResult;
+import com.thr.tuchat.exception.ResultCode;
+import com.thr.tuchat.exception.ThrowUtils;
 import com.thr.tuchat.pojo.User;
 import com.thr.tuchat.service.UserService;
 import jakarta.annotation.Resource;
@@ -21,26 +23,21 @@ public class UserController {
 
     @SaCheckLogin
     @GetMapping("/getInfo")
-    public ResponseResult<User> getUserInfo () {
-        try {
-            String userId = StpUtil.getLoginIdAsString();
-            log.info("用户正在获取个人信息，#{}",userId);
-            User user = userService.getUserById(userId);
-            return ResponseResult.success(user);
-        } catch (Exception e) {
-            return ResponseResult.fail(e.getMessage());
-        }
+    public ResponseResult<User> getUserInfo() {
+        String userId = StpUtil.getLoginIdAsString();
+        ThrowUtils.throwIf(userId == null, ResultCode.NOT_LOGIN_ERROR, "用户未登录");
+        log.info("用户正在获取个人信息，#{}", userId);
+        User user = userService.getUserById(userId);
+        return ResponseResult.success(user);
     }
 
     @SaCheckLogin
     @PostMapping("/updateAvatar")
-    public ResponseResult<String> updateUserAvatar (@RequestParam("file") MultipartFile file) {
-        try {
-            String URL = userService.updateUserAvatar(file);
-            log.info("用户正在更新头像，#{}",URL);
-            return ResponseResult.success(URL);
-        } catch (Exception e) {
-            return ResponseResult.fail(e.getMessage());
-        }
+    public ResponseResult<String> updateUserAvatar(@RequestParam("file") MultipartFile file) {
+        String userId = StpUtil.getLoginIdAsString();
+        ThrowUtils.throwIf(userId == null, ResultCode.NOT_LOGIN_ERROR, "用户未登录");
+        String URL = userService.updateUserAvatar(file);
+        log.info("用户正在更新头像:{}", URL);
+        return ResponseResult.success(URL);
     }
 }
