@@ -1,11 +1,11 @@
 package com.thr.tuchat.service;
 
 
-import cn.dev33.satoken.context.mock.SaTokenContextMockUtil;
 import cn.dev33.satoken.stp.StpUtil;
 import com.thr.tuchat.constant.AIMessageType;
 import com.thr.tuchat.dto.AIRequestDTO;
-import com.thr.tuchat.exception.ServiceDeniedException;
+import com.thr.tuchat.exception.BusinessException;
+import com.thr.tuchat.exception.ResultCode;
 import com.thr.tuchat.pojo.Conversation;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -134,7 +134,7 @@ public class AIService {
             aiMessage.setRole(AIMessageType.ASSISTANT.getRole());
             aiMessage.setContent(e.getMessage());
             messageService.addNewMessage(aiMessage);
-            throw new ServiceDeniedException(e.getMessage());
+            throw new BusinessException(ResultCode.SYSTEM_ERROR, e.getMessage());
         }
     }
 }

@@ -6,12 +6,9 @@ import com.thr.tuchat.exception.ResultCode;
 import com.thr.tuchat.exception.ThrowUtils;
 import com.thr.tuchat.mapper.ConversationMapper;
 import com.thr.tuchat.pojo.Conversation;
-import com.thr.tuchat.pojo.User;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.units.qual.C;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
@@ -74,5 +71,15 @@ public class ConversationService {
         conversation.setTitle(newTitle);
         conversationMapper.renameConversation(conversation);
         return true;
+    }
+
+    public void deleteConversationById(String conversationId) {
+        ThrowUtils.throwIf(conversationId == null, ResultCode.PARAMS_ERROR, "conversationId为空");
+        String userId = StpUtil.getLoginIdAsString();
+        Conversation conversation = this.getConversationById(conversationId);
+        ThrowUtils.throwIf(Objects.isNull(conversation), ResultCode.NOT_FOUND_ERROR, "不存在的conversation");
+        ThrowUtils.throwIf(!Objects.equals(userId, conversation.getUserId()), ResultCode.NO_AUTH_ERROR,
+                "正在删除不属于自己的conversationId");
+        conversationMapper.deleteConversationById(conversationId);
     }
 }
