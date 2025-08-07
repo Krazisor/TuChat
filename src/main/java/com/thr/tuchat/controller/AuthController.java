@@ -92,7 +92,7 @@ public class AuthController {
 
         // 提取 "keys" 数组中的第一个元素
         List<Map<String, Object>> keys = (List<Map<String, Object>>) jwksData.get("keys");
-        Map<String, Object> firstKey = keys.get(0); // 获取第一个 key
+        Map<String, Object> firstKey = keys.getFirst(); // 获取第一个 key
 
         // 检查是否为 EC 类型，并且算法是 ES384
         String keyType = (String) firstKey.get("kty"); // 密钥类型

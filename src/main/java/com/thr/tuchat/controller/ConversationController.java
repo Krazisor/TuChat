@@ -56,8 +56,8 @@ public class ConversationController {
         ThrowUtils.throwIf(userId == null, ResultCode.NOT_LOGIN_ERROR, "用户未登录");
         ThrowUtils.throwIf(Objects.isNull(conversationRenameRequest), ResultCode.PARAMS_ERROR,
                 "conversationRenameRequest不存在");
-        Boolean success = conversationService.renameConversation(conversationRenameRequest.getConversationId(),
-                conversationRenameRequest.getNewTitle());
+        Boolean success = conversationService.renameConversation(conversationRenameRequest.conversationId(),
+                conversationRenameRequest.newTitle());
         return ResponseResult.success(success);
     }
 }

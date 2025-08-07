@@ -2,9 +2,8 @@ package com.thr.tuchat.controller;
 
 
 import cn.dev33.satoken.annotation.SaCheckLogin;
-import cn.dev33.satoken.context.mock.SaTokenContextMockUtil;
-import com.thr.tuchat.dto.AIRequestDTO;
-import com.thr.tuchat.service.AIService;
+import com.thr.tuchat.dto.AIRequest;
+import com.thr.tuchat.ai.AIService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -24,10 +23,10 @@ public class AIController {
 
     @SaCheckLogin
     @PostMapping(value = "/getAIResponse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<String> getAIResponse (@RequestBody AIRequestDTO aiRequestDTO) {
+    public Flux<String> getAIResponse (@RequestBody AIRequest aiRequestDTO) {
         try {
             log.info("用户发起AI问答，参数:#{}", aiRequestDTO);
-            return aiService.getAIResponseWithAncient(aiRequestDTO);
+            return aiService.getAIResponseWithRAGAndAncient(aiRequestDTO);
         } catch (Exception e) {
             return Flux.just("ERROR!!!!oops~");
         }

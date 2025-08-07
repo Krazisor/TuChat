@@ -1,10 +1,8 @@
 package com.thr.tuchat;
 
-import com.thr.tuchat.service.AIService;
+import com.thr.tuchat.ai.AIService;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Test;
-import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import reactor.core.publisher.Flux;
 

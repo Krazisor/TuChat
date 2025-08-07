@@ -111,15 +111,42 @@
             <artifactId>sa-token-spring-boot3-starter</artifactId>
             <version>1.43.0</version>
         </dependency>
-        <!--  1.43Satoken特供   -->
+        <!--  1.43 Satoken特供 -->
         <dependency>
             <groupId>cn.dev33</groupId>
             <artifactId>sa-token-apikey</artifactId>
             <version>1.43.0</version>
         </dependency>
+        <!-- openai 的 api -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-starter-model-openai</artifactId>
+        </dependency>
+        <!-- 内置的向量数据库 -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-advisors-vector-store</artifactId>
+        </dependency>
+        <!-- weaviate的向量数据库 -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-weaviate-store</artifactId>
+        </dependency>
+        <!-- weaviate的向量数据库自动配置 -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-vector-store-weaviate</artifactId>
+        </dependency>
+        <!-- markdown文档读取器 -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-markdown-document-reader</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <!-- 开箱即用的RAG支持 -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-rag</artifactId>
         </dependency>
 
     </dependencies>
