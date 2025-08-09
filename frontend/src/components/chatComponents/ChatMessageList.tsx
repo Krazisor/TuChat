@@ -46,7 +46,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({messages, messagesEndR
     const userInfo = useAppSelector(state => state.user.userInfo)
     return (
         <div style={{flex: 1, padding: '20px', overflow: 'auto', backgroundColor: '#f8f8f8'}}>
-            {activeTopic && messages.length > 0 ? (
+            {activeTopic && messages.length >= 0 ? (
                 <>
                     <Bubble.List
                         autoScroll={false}
