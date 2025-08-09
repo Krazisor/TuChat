@@ -1,20 +1,17 @@
 import React from 'react';
-import {Button, Flex, Typography, Upload, message} from 'antd';
-import {Sender} from '@ant-design/x';
-import {CloudUploadOutlined, LinkOutlined, DeleteOutlined} from '@ant-design/icons';
-import type {UploadFile} from 'antd';
-
-interface FileItem extends UploadFile {
-    url: string;
-}
+import type {GetRef} from 'antd';
+import {Button} from 'antd';
+import {Attachments, Sender} from '@ant-design/x';
+import {CloudUploadOutlined, LinkOutlined} from '@ant-design/icons';
+import type {Attachment} from "@ant-design/x/es/attachments";
 
 interface ChatSenderProps {
     input: string;
     onInputChange: (val: string) => void;
     onSend: (val: string) => void;
-    attachments: FileItem[];
-    onFileUpload: (file: UploadFile) => boolean;
-    onRemoveAttachment: (file: UploadFile) => void;
+    attachments: Attachment[];
+    setAttachments: (o: Attachment[]) => void
+    loading: boolean
     open: boolean;
     setOpen: (o: boolean) => void;
     disabled?: boolean;
@@ -25,29 +22,44 @@ const ChatSender: React.FC<ChatSenderProps> = ({
                                                    onInputChange,
                                                    onSend,
                                                    attachments,
-                                                   onFileUpload,
-                                                   onRemoveAttachment,
+                                                   setAttachments,
                                                    open,
+                                                   loading,
                                                    setOpen,
                                                    disabled
                                                }) => {
-    // 附件头部
+
+    const senderRef = React.useRef<GetRef<typeof Sender>>(null);
+
     const SenderHeader = (
-        <Sender.Header title="Upload Sample" open={open} onOpenChange={setOpen}>
-            <Flex vertical align="center" gap="small" style={{marginBlock: 16}}>
-                <CloudUploadOutlined style={{fontSize: '4em'}} />
-                <Typography.Title level={5} style={{margin: 0}}>
-                    Drag file here (demo)
-                </Typography.Title>
-                <Typography.Text type="secondary">
-                    支持 pdf, doc, xlsx, ppt, txt, image 类型
-                </Typography.Text>
-                <Button
-                    onClick={() => message.info('Mock select file')}
-                >
-                    Select File
-                </Button>
-            </Flex>
+        <Sender.Header
+            title="文件上传"
+            open={open}
+            onOpenChange={setOpen}
+            styles={{
+                content: {
+                    padding: "5px",
+                },
+            }}
+        >
+            <Attachments
+                // Mock not real upload file
+                beforeUpload={() => false}
+                items={attachments}
+                onChange={({ fileList }) => setAttachments(fileList)}
+                placeholder={(type) =>
+                    type === 'drop'
+                        ? {
+                            title: '将文件拖到这里',
+                        }
+                        : {
+                            icon: <CloudUploadOutlined />,
+                            title: '上传文件',
+                            description: '点击或拖拽文件到此处完成上传',
+                        }
+                }
+                getDropContainer={() => senderRef.current?.nativeElement}
+            />
         </Sender.Header>
     );
 
@@ -56,7 +68,7 @@ const ChatSender: React.FC<ChatSenderProps> = ({
             prefix={
                 <Button
                     type="text"
-                    icon={<LinkOutlined />}
+                    icon={<LinkOutlined/>}
                     onClick={() => setOpen(!open)}
                 />
             }
@@ -65,35 +77,19 @@ const ChatSender: React.FC<ChatSenderProps> = ({
             onChange={onInputChange}
             onSubmit={onSend}
             disabled={disabled}
+            loading={loading}
+            actions={(_, info) => {
+                const {SendButton, LoadingButton} = info.components;
+                if (loading === true) {
+                    return (
+                        <LoadingButton/>
+                    );
+                }
+                return <SendButton style={{borderRadius: 12}}/>
+            }}
             placeholder="输入消息，按Enter发送..."
             style={{width: '100%', borderRadius: '0'}}
-        >
-            {/*/!* 附件展示与上传 *!/*/}
-            {/*<Upload*/}
-            {/*    showUploadList={false}*/}
-            {/*    customRequest={() => false}*/}
-            {/*    beforeUpload={onFileUpload}*/}
-            {/*    fileList={attachments}*/}
-            {/*/>*/}
-            {/*{attachments.length > 0 &&*/}
-            {/*    attachments.map(file => (*/}
-            {/*        <div key={file.uid} style={{marginTop: 4}}>*/}
-            {/*<span>*/}
-            {/*  <CloudUploadOutlined />*/}
-            {/*    {file.name}*/}
-            {/*</span>*/}
-            {/*            <Button*/}
-            {/*                size="small"*/}
-            {/*                icon={<DeleteOutlined />}*/}
-            {/*                onClick={() => onRemoveAttachment(file)}*/}
-            {/*                style={{marginLeft: 8}}*/}
-            {/*                type="text"*/}
-            {/*                danger*/}
-            {/*            />*/}
-            {/*        </div>*/}
-            {/*    ))*/}
-            {/*}*/}
-        </Sender>
+        />
     );
 };
 

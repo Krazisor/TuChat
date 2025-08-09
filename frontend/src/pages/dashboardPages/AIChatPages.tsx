@@ -1,9 +1,8 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {Button, Divider, message, Splitter, theme, Typography, type UploadFile} from 'antd';
+import {Divider, message, Splitter, Typography} from 'antd';
 import {
     DeleteOutlined,
     EditOutlined,
-    PlusOutlined,
     StarOutlined,
     StopOutlined
 } from '@ant-design/icons';
@@ -16,6 +15,7 @@ import dayjs from "dayjs";
 import ChatMessageList, {type Message} from '../../components/chatComponents/ChatMessageList';
 import ChatSender from '../../components/chatComponents/ChatSender';
 import TopicSidebar from '../../components/chatComponents/TopicSidebar';
+import type {Attachment} from "@ant-design/x/es/attachments";
 
 const {Title} = Typography;
 
@@ -26,10 +26,10 @@ const AIChatPages: React.FC = () => {
     const [input, setInput] = useState<string>('');
     const [isCreatingTopic, setIsCreatingTopic] = useState<boolean>(false);
     const [newTopicTitle, setNewTopicTitle] = useState<string>('');
-    const [attachments, setAttachments] = useState<any[]>([]);
+    const [attachments, setAttachments] = useState<Attachment[]>([]);
     const [open, setOpen] = useState(false);
     const [conversation, setConversation] = useState<any[]>([]);
-    const {token} = theme.useToken();
+    const [loading, setLoading] = useState<boolean>(false)
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     // --- 拉取会话列表 ---
@@ -120,6 +120,7 @@ const AIChatPages: React.FC = () => {
     const handleSend = (value: string): void => {
         if (!value.trim() && attachments.length === 0) return;
         if (!activeTopic) return;
+        setLoading(true);
 
         const newUserMsg: Message = {
             id: `${activeTopic}-${Date.now()}`,
@@ -136,6 +137,7 @@ const AIChatPages: React.FC = () => {
             question: value,
             model: 'gpt-4.1'
         };
+        console.log(attachments)
 
         setInput('');
         setAttachments([]);
@@ -161,7 +163,10 @@ const AIChatPages: React.FC = () => {
                 });
             },
             err => {
-                message.error(err);
+                message.error(err).then(r => setLoading(false));
+            },
+            () => {
+                setLoading(false)
             }
         )
     };
@@ -192,21 +197,6 @@ const AIChatPages: React.FC = () => {
         setNewTopicTitle('');
     };
 
-    // --- 文件上传 ---
-    const handleFileUpload = (file: UploadFile): boolean => {
-        // 按需可加校验
-        const newFile = {
-            ...file,
-            uid: file.uid,
-            name: file.name,
-            status: 'done',
-            url: URL.createObjectURL(file as any as Blob),
-            type: file.type
-        };
-        setAttachments(prev => [...prev, newFile]);
-        return false; // 禁止自动上传
-    };
-
     // --- 移除附件 ---
     const handleRemoveAttachment = (file: { uid: any; }): void => {
         setAttachments(prev => prev.filter(item => item.uid !== file.uid));
@@ -227,15 +217,15 @@ const AIChatPages: React.FC = () => {
                             </Title>
                         </div>
                         <Divider style={{margin: '0', background: '#eeeeee', height: '2px'}}/>
-                        <ChatMessageList messages={messages} messagesEndRef={messagesEndRef} activeTopic={activeTopic} />
+                        <ChatMessageList messages={messages} messagesEndRef={messagesEndRef} activeTopic={activeTopic}/>
                         <ChatSender
                             input={input}
                             onInputChange={setInput}
                             onSend={handleSend}
                             attachments={attachments}
-                            onFileUpload={handleFileUpload}
-                            onRemoveAttachment={handleRemoveAttachment}
+                            setAttachments={setAttachments}
                             open={open}
+                            loading={loading}
                             setOpen={setOpen}
                             disabled={!activeTopic}
                         />

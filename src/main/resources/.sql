@@ -67,3 +67,6 @@ CREATE TABLE knowledge_base_member
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='知识库成员权限表';
 
+ALTER TABLE file
+    ADD COLUMN file_size BIGINT NOT NULL DEFAULT 0 COMMENT '文件大小（字节）' AFTER url;
+

@@ -67,7 +67,6 @@ const HomePage: React.FC = () => {
             </Header>
 
             <Content style={{ width: '100%' }}>
-                {/* 英雄区域 */}
                 <div style={{
                     background: `linear-gradient(135deg, ${colors.lightBlue}, #fff)`,
                     padding: '80px 50px',

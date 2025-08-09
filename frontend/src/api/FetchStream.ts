@@ -14,6 +14,7 @@ export async function fetchAIResponseStream(
     payload: AIRequestDTO,
     onMessage: (msg: string) => void,
     onError?: (err: any) => void,
+    onComplete?: () => void,      // 新增
 ) {
     try {
         const satoken = store.getState().user.saToken ?? '';
@@ -35,13 +36,10 @@ export async function fetchAIResponseStream(
         const parser = createParser({
             onEvent: (event) => {
                 if (event.data === '[[LINEBREAKS]]') {
-                    // 空data行转换为换行符
                     onMessage('\n');
                 } else if (event.data === '[[SPACE]]') {
-                    // 特殊标识符转换为空格
                     onMessage(' ');
                 } else if (event.data) {
-                    // 正常数据传递
                     onMessage(event.data);
                 }
             }
@@ -51,12 +49,14 @@ export async function fetchAIResponseStream(
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
-
-            // 喂数据到解析器，它会自动处理SSE格式并触发回调
             parser.feed(new TextDecoder().decode(value));
         }
+        // 读取完毕后执行 onComplete
+        if (onComplete) onComplete();
     } catch (err) {
         if (onError) onError(err);
+        // 可选：异常时也可执行 onComplete，通常业务上更推荐只执行 onError
+        if (onComplete) onComplete();
         else console.error(err);
     }
 }

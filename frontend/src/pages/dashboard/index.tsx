@@ -64,10 +64,9 @@ const Dashboard = () => {
                     </Title>
                 </Header>
                 <Content style={{
-                    margin: '8px 0 0 8px',
+                    margin: '2px 0 0 2px',
                     padding: 24,
                     background: '#fff',
-                    borderRadius: '4px',
                     minHeight: 280
                 }}>
                     {renderContent()}
