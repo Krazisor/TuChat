@@ -1,4 +1,4 @@
-package com.thr.tuchat.dto;
+package com.thr.tuchat.model.dto;
 
 
 //import lombok.AllArgsConstructor;

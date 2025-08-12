@@ -2,7 +2,7 @@ package com.thr.tuchat.ai.sub;
 
 
 import com.thr.tuchat.constant.AIMessageType;
-import com.thr.tuchat.service.MessageService;
+import com.thr.tuchat.service.impl.MessageServiceImpl;
 import jakarta.annotation.Resource;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
@@ -17,7 +17,7 @@ import java.util.Objects;
 public class AIChatHandler {
 
     @Resource
-    private MessageService messageService;
+    private MessageServiceImpl messageService;
 
     public Flux<String> transformTokenToCharacterStream(String token) {
         if (token == null || token.isEmpty()) {
@@ -59,7 +59,7 @@ public class AIChatHandler {
     }
 
     public void getAiAncientHistory(List<Message> messageList, String conversationId) {
-        List<com.thr.tuchat.pojo.Message> history = messageService.getAllMessageByConversationId(conversationId);
+        List<com.thr.tuchat.model.entity.Message> history = messageService.getAllMessageByConversationId(conversationId);
         history.forEach(item -> {
             if (Objects.equals(item.getRole(), AIMessageType.USER.getRole())) {
                 messageList.add(new UserMessage(item.getContent()));
@@ -70,7 +70,7 @@ public class AIChatHandler {
     }
 
     public void initAndInsertUserMessageWithConversationId(String conversationId, String question) {
-        com.thr.tuchat.pojo.Message message = new com.thr.tuchat.pojo.Message();
+        com.thr.tuchat.model.entity.Message message = new com.thr.tuchat.model.entity.Message();
         message.setConversationId(conversationId);
         message.setRole(AIMessageType.USER.getRole());
         message.setContent(question);
@@ -78,7 +78,7 @@ public class AIChatHandler {
     }
 
     public void initAndInsertAssistantMessageWithConversationId(String conversationId, String question) {
-        com.thr.tuchat.pojo.Message aiMessage = new com.thr.tuchat.pojo.Message();
+        com.thr.tuchat.model.entity.Message aiMessage = new com.thr.tuchat.model.entity.Message();
         aiMessage.setConversationId(conversationId);
         aiMessage.setRole(AIMessageType.ASSISTANT.getRole());
         aiMessage.setContent(question);

@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.thr.tuchat.config.LogtoConfig;
 import com.thr.tuchat.common.ResponseResult;
 import com.thr.tuchat.exception.ResultCode;
-import com.thr.tuchat.pojo.User;
+import com.thr.tuchat.model.entity.User;
 import com.thr.tuchat.service.UserService;
 import io.jsonwebtoken.*;
 import jakarta.annotation.Resource;

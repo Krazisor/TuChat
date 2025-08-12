@@ -3,13 +3,13 @@ package com.thr.tuchat.controller;
 
 import cn.dev33.satoken.annotation.SaCheckLogin;
 import cn.dev33.satoken.stp.StpUtil;
-import com.thr.tuchat.dto.ConversationRenameRequest;
+import com.thr.tuchat.model.dto.ConversationRenameRequest;
 import com.thr.tuchat.exception.ResultCode;
 import com.thr.tuchat.exception.ThrowUtils;
-import com.thr.tuchat.pojo.Conversation;
+import com.thr.tuchat.model.entity.Conversation;
 import com.thr.tuchat.common.ResponseResult;
-import com.thr.tuchat.service.ConversationManageService;
 import com.thr.tuchat.service.ConversationService;
+import com.thr.tuchat.service.impl.ConversationManageService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;

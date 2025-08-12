@@ -19,13 +19,13 @@ import java.util.stream.Collectors;
 @Slf4j
 public class MarkdownDocumentLoader {
 
-//    private final ResourcePatternResolver resourcePatternResolver;
-
-//    MarkdownDocumentLoader(ResourcePatternResolver resourcePatternResolver) {
-//        this.resourcePatternResolver = resourcePatternResolver;
-//    }
-
-    public List<Document> loadMarkdowns (List<File> fileList, Map<String, Object> metadata){
+    /**
+     * 将文件们批量分片分块处理进行向量化DEMO
+     * @param fileList 文件列表
+     * @param metadata 元信息
+     * @return 处理好的文档
+     */
+    public List<Document> loadMarkdowns (List<File> fileList, List<Map<String, Object>> metadata){
         List<Document> allDocuments = new ArrayList<>();
         // 将file转换为Resource格式
         List<Resource> resources = fileList.stream()
@@ -36,9 +36,8 @@ public class MarkdownDocumentLoader {
             MarkdownDocumentReaderConfig config = MarkdownDocumentReaderConfig.builder()
                     .withHorizontalRuleCreateDocument(true)
                     .withIncludeBlockquote(false)
-                    .withIncludeBlockquote(false)
                     .withAdditionalMetadata("filename", fileName == null ? "unknownFile" : fileName)
-                    .withAdditionalMetadata(metadata)
+                    .withAdditionalMetadata(metadata.get(resources.indexOf(resource)))
                     .build();
             MarkdownDocumentReader markdownDocumentReader = new MarkdownDocumentReader(resource, config);
             allDocuments.addAll(markdownDocumentReader.get());

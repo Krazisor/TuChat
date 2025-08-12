@@ -43,8 +43,6 @@ const ChatSender: React.FC<ChatSenderProps> = ({
             }}
         >
             <Attachments
-                // Mock not real upload file
-                beforeUpload={() => false}
                 items={attachments}
                 onChange={({ fileList }) => setAttachments(fileList)}
                 placeholder={(type) =>

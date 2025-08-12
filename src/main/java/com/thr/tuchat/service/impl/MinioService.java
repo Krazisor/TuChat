@@ -1,4 +1,4 @@
-package com.thr.tuchat.service;
+package com.thr.tuchat.service.impl;
 
 import com.thr.tuchat.config.MinioConfig;
 import io.minio.GetPresignedObjectUrlArgs;

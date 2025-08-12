@@ -1,8 +1,10 @@
-package com.thr.tuchat.service;
+package com.thr.tuchat.service.impl;
 
 import cn.dev33.satoken.stp.StpUtil;
 import com.thr.tuchat.exception.BusinessException;
 import com.thr.tuchat.exception.ResultCode;
+import com.thr.tuchat.service.ConversationService;
+import com.thr.tuchat.service.MessageService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

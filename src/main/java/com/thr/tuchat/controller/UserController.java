@@ -6,8 +6,8 @@ import cn.dev33.satoken.stp.StpUtil;
 import com.thr.tuchat.common.ResponseResult;
 import com.thr.tuchat.exception.ResultCode;
 import com.thr.tuchat.exception.ThrowUtils;
-import com.thr.tuchat.pojo.User;
-import com.thr.tuchat.service.UserService;
+import com.thr.tuchat.model.entity.User;
+import com.thr.tuchat.service.impl.UserServiceImpl;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class UserController {
 
     @Resource
-    private UserService userService;
+    private UserServiceImpl userService;
 
     @SaCheckLogin
     @GetMapping("/getInfo")

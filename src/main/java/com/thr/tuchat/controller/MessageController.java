@@ -4,7 +4,7 @@ import cn.dev33.satoken.annotation.SaCheckLogin;
 import cn.dev33.satoken.stp.StpUtil;
 import com.thr.tuchat.exception.ResultCode;
 import com.thr.tuchat.exception.ThrowUtils;
-import com.thr.tuchat.pojo.Message;
+import com.thr.tuchat.model.entity.Message;
 import com.thr.tuchat.common.ResponseResult;
 import com.thr.tuchat.service.MessageService;
 import jakarta.annotation.Resource;

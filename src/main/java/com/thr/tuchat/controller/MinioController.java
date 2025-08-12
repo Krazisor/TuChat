@@ -6,7 +6,7 @@ import com.thr.tuchat.common.ResponseResult;
 import com.thr.tuchat.exception.BusinessException;
 import com.thr.tuchat.exception.ResultCode;
 import com.thr.tuchat.exception.ThrowUtils;
-import com.thr.tuchat.service.MinioService;
+import com.thr.tuchat.service.impl.MinioService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.CrossOrigin;

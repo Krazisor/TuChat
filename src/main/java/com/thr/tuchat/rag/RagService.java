@@ -9,6 +9,7 @@ import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -22,9 +23,21 @@ public class RagService {
     @Resource
     private MarkdownDocumentLoader markdownDocumentLoader;
 
-    public void addDocument(List<File> fileList, Map<String, Object> metadata) {
+    /**
+     * 首先将file放到数据库中，然后进行向量化
+     * @param fileList
+     */
+    public void putFileIntoVector (List<File> fileList){
+        Map<String, Object> metadata = new HashMap<>();
+        for (File file : fileList){
+
+        }
+    }
+
+    public void addDocument(List<File> fileList, List<Map<String, Object>> metadata) {
         log.info("正在将文件:{},metadata:{}载入weaviate", fileList, metadata);
         List<Document> documents = markdownDocumentLoader.loadMarkdowns(fileList, metadata);
+//        List<Document> documentsWithId =
         vectorStore.add(documents);
     }
 

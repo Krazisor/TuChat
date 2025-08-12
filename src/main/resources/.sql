@@ -70,3 +70,11 @@ CREATE TABLE knowledge_base_member
 ALTER TABLE file
     ADD COLUMN file_size BIGINT NOT NULL DEFAULT 0 COMMENT '文件大小（字节）' AFTER url;
 
+ALTER TABLE file
+    ADD COLUMN is_public TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否公开',
+    ADD COLUMN whitelist TEXT COMMENT '允许访问的用户ID（逗号分隔），为空则只有owner可访问',
+    ADD COLUMN blacklist TEXT COMMENT '禁止访问的用户ID（逗号分隔）';
+# is_public = 1 时
+# 不看 whitelist，所有用户（除 blacklist）可访问
+# is_public = 0 时
+# 只有 whitelist 中用户（和 owner）可访问
