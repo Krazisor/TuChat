@@ -3,6 +3,7 @@ package com.thr.tuchat.controller;
 
 import cn.dev33.satoken.annotation.SaCheckLogin;
 import cn.dev33.satoken.stp.StpUtil;
+import cn.hutool.core.util.StrUtil;
 import com.thr.tuchat.model.dto.ConversationRenameRequest;
 import com.thr.tuchat.exception.ResultCode;
 import com.thr.tuchat.exception.ThrowUtils;
@@ -58,6 +59,17 @@ public class ConversationController {
                 "conversationRenameRequest不存在");
         Boolean success = conversationService.renameConversation(conversationRenameRequest.conversationId(),
                 conversationRenameRequest.newTitle());
+        return ResponseResult.success(success);
+    }
+
+    @SaCheckLogin
+    @GetMapping("/delete")
+    public ResponseResult<Boolean> deleteConversation(@RequestParam String conversationId) {
+        String userId = StpUtil.getLoginIdAsString();
+        ThrowUtils.throwIf(userId == null, ResultCode.NOT_LOGIN_ERROR, "用户未登录");
+        ThrowUtils.throwIf(StrUtil.isEmptyIfStr(conversationId), ResultCode.PARAMS_ERROR,
+                "conversationId不存在");
+        Boolean success = conversationManageService.deleteConversationWithMessage(conversationId);
         return ResponseResult.success(success);
     }
 }
