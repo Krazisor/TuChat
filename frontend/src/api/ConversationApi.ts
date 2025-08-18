@@ -8,6 +8,11 @@ export interface ConversationBaseType {
     isMarked: boolean
 }
 
+export interface ConversationRenameRequest {
+    conversationId: string,
+    newTitle: string
+}
+
 
 export const getConversationList = async (): Promise<ConversationBaseType[] | null> => {
     return await fetchAPI('/conversation/list', {})
@@ -24,8 +29,8 @@ export const deleteConversation = async (conversationId: string) : Promise<boole
     return await fetchAPI(`/conversation/delete?${params}`, {})
 }
 
-export const updateConversation = async (conversation: ConversationBaseType) : Promise<boolean | null> => {
-    return await fetchAPI('/conversation/update', {
+export const renameConversation = async (conversation: ConversationRenameRequest) : Promise<boolean | null> => {
+    return await fetchAPI('/conversation/rename', {
         method: 'POST',
         body: JSON.stringify(conversation)
     })

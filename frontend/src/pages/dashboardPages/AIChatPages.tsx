@@ -7,7 +7,12 @@ import {
     StopOutlined
 } from '@ant-design/icons';
 
-import {addNewConversation, deleteConversation, getConversationList} from "../../api/ConversationApi";
+import {
+    addNewConversation,
+    type ConversationRenameRequest,
+    deleteConversation,
+    getConversationList, renameConversation
+} from "../../api/ConversationApi";
 import {getMessageListByConversationId} from "../../api/MessageApi";
 import {fetchAIResponseStream} from "../../api/FetchStream";
 import dayjs from "dayjs";
@@ -16,6 +21,7 @@ import ChatMessageList, {type Message} from '../../components/chatComponents/Cha
 import ChatSender from '../../components/chatComponents/ChatSender';
 import TopicSidebar from '../../components/chatComponents/TopicSidebar';
 import type {Attachment} from "@ant-design/x/es/attachments";
+import TopicEditModal from "../../components/chatComponents/TopicEditModal.tsx";
 
 const {Title} = Typography;
 
@@ -31,6 +37,10 @@ const AIChatPages: React.FC = () => {
     const [conversation, setConversation] = useState<any[]>([]);
     const [loading, setLoading] = useState<boolean>(false)
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const [openEditModal, setOpenEditModal] = useState(false);
+    const [confirmLoading, setConfirmLoading] = useState(false);
+    const [newTitleName, setNewTitleName] = useState<string>('');
+    const curEditTopicId = useRef<string>('')
 
     // --- 拉取会话列表 ---
     useEffect(() => {
@@ -79,7 +89,8 @@ const AIChatPages: React.FC = () => {
         onClick: async (menuInfo: { domEvent: { stopPropagation: () => void; }; key: any; }) => {
             menuInfo.domEvent.stopPropagation();
             if (menuInfo.key === 'edit') {
-
+                curEditTopicId.current = conv.key
+                setOpenEditModal(true)
             }
             if (menuInfo.key === 'delete') {
                 if (await deleteConversation(conv.key)) {
@@ -88,17 +99,21 @@ const AIChatPages: React.FC = () => {
                     message.error("删除失败")
                 }
             }
-            let conversationList = await getConversationList();
-            setConversation(
-                conversationList!.map(item => ({
-                    key: item.conversationId,
-                    label: item.title,
-                    icon: <StarOutlined style={{color: '#bbbbbb'}}/>,
-                    timestamp: Number(item.createTime)
-                }))
-            );
+            await getConversations()
         },
     });
+
+    const getConversations = async () => {
+        let conversationList = await getConversationList();
+        setConversation(
+            conversationList!.map(item => ({
+                key: item.conversationId,
+                label: item.title,
+                icon: <StarOutlined style={{color: '#bbbbbb'}}/>,
+                timestamp: Number(item.createTime)
+            }))
+        );
+    }
 
     // --- 选中话题，拉取消息 ---
     const handleActiveChange = async (key: string) => {
@@ -202,53 +217,80 @@ const AIChatPages: React.FC = () => {
         setAttachments(prev => prev.filter(item => item.uid !== file.uid));
     };
 
+    // 编辑标题名称确认逻辑
+    const handleEditModal = async (value: string) => {
+        setConfirmLoading(true)
+        const params: ConversationRenameRequest = {
+            conversationId: curEditTopicId.current,
+            newTitle: value
+        }
+        const response = await renameConversation(params)
+        if (response === true) {
+            message.success("更改成功")
+        } else {
+            message.error(response)
+        }
+        await getConversations()
+        setConfirmLoading(false)
+        setOpenEditModal(false)
+        setNewTitleName('')
+    }
+
     return (
-        <div style={{height: '100%', overflow: 'hidden'}}>
-            <Splitter style={{height: '100%'}}>
-                {/* 聊天内容/发送 */}
-                <Splitter.Panel defaultSize="85%" min="50%" max="85%">
-                    <div style={{height: '100%', display: 'flex', flexDirection: 'column'}}>
-                        <div style={{textAlign: 'center', background: '#f8f8f8'}}>
-                            <Title level={4} style={{
-                                height: '30px', lineHeight: '30px',
-                                margin: 0, padding: '0 8px', display: 'inline-block',
-                            }}>
-                                {conversation.find(t => t.key === activeTopic)?.label}
-                            </Title>
+        <>
+            <TopicEditModal open={openEditModal} confirmLoading={confirmLoading}
+                            value={newTitleName}
+                            onValueChange={setNewTitleName}
+                            handleOk={() => handleEditModal(newTitleName)}
+                            handleCancel={() => setOpenEditModal(false)}/>
+            <div style={{height: '100%', overflow: 'hidden'}}>
+                <Splitter style={{height: '100%'}}>
+                    {/* 聊天内容/发送 */}
+                    <Splitter.Panel defaultSize="85%" min="50%" max="85%">
+                        <div style={{height: '100%', display: 'flex', flexDirection: 'column'}}>
+                            <div style={{textAlign: 'center', background: '#f8f8f8'}}>
+                                <Title level={4} style={{
+                                    height: '30px', lineHeight: '30px',
+                                    margin: 0, padding: '0 8px', display: 'inline-block',
+                                }}>
+                                    {conversation.find(t => t.key === activeTopic)?.label}
+                                </Title>
+                            </div>
+                            <Divider style={{margin: '0', background: '#eeeeee', height: '2px'}}/>
+                            <ChatMessageList messages={messages} messagesEndRef={messagesEndRef}
+                                             activeTopic={activeTopic}/>
+                            <ChatSender
+                                input={input}
+                                onInputChange={setInput}
+                                onSend={handleSend}
+                                attachments={attachments}
+                                setAttachments={setAttachments}
+                                open={open}
+                                loading={loading}
+                                setOpen={setOpen}
+                                disabled={!activeTopic}
+                            />
                         </div>
-                        <Divider style={{margin: '0', background: '#eeeeee', height: '2px'}}/>
-                        <ChatMessageList messages={messages} messagesEndRef={messagesEndRef} activeTopic={activeTopic}/>
-                        <ChatSender
-                            input={input}
-                            onInputChange={setInput}
-                            onSend={handleSend}
-                            attachments={attachments}
-                            setAttachments={setAttachments}
-                            open={open}
-                            loading={loading}
-                            setOpen={setOpen}
-                            disabled={!activeTopic}
+                    </Splitter.Panel>
+                    {/* 右侧话题管理 */}
+                    <Splitter.Panel collapsible>
+                        <TopicSidebar
+                            isCreatingTopic={isCreatingTopic}
+                            handleCreateTopic={handleCreateTopic}
+                            newTopicTitle={newTopicTitle}
+                            setNewTopicTitle={setNewTopicTitle}
+                            conversations={conversation}
+                            activeTopic={activeTopic}
+                            onActiveChange={async v => {
+                                setActiveTopic(v);
+                                await handleActiveChange(v);
+                            }}
+                            menuConfig={menuConfig}
                         />
-                    </div>
-                </Splitter.Panel>
-                {/* 右侧话题管理 */}
-                <Splitter.Panel collapsible>
-                    <TopicSidebar
-                        isCreatingTopic={isCreatingTopic}
-                        handleCreateTopic={handleCreateTopic}
-                        newTopicTitle={newTopicTitle}
-                        setNewTopicTitle={setNewTopicTitle}
-                        conversations={conversation}
-                        activeTopic={activeTopic}
-                        onActiveChange={async v => {
-                            setActiveTopic(v);
-                            await handleActiveChange(v);
-                        }}
-                        menuConfig={menuConfig}
-                    />
-                </Splitter.Panel>
-            </Splitter>
-        </div>
+                    </Splitter.Panel>
+                </Splitter>
+            </div>
+        </>
     );
 };
 

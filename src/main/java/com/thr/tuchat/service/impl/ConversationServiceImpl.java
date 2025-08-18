@@ -78,7 +78,7 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         ThrowUtils.throwIf(!Objects.equals(conversation.getUserId(), userId), ResultCode.NO_AUTH_ERROR,
                 "正在重命名不属于自己的conversation");
         LambdaUpdateWrapper<Conversation> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.set(Conversation::getTitle, newTitle).eq(Conversation::getUserId, userId);
+        updateWrapper.set(Conversation::getTitle, newTitle).eq(Conversation::getConversationId, conversationId);
         conversationMapper.update(null, updateWrapper);
         return true;
     }
