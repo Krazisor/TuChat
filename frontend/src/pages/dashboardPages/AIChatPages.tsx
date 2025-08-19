@@ -4,14 +4,15 @@ import {
     DeleteOutlined,
     EditOutlined,
     StarOutlined,
-    StopOutlined
+    StarFilled,
+    StarTwoTone
 } from '@ant-design/icons';
 
 import {
     addNewConversation,
     type ConversationRenameRequest,
     deleteConversation,
-    getConversationList, renameConversation
+    getConversationList, renameConversation, starConversation
 } from "../../api/ConversationApi";
 import {getMessageListByConversationId} from "../../api/MessageApi";
 import {fetchAIResponseStream} from "../../api/FetchStream";
@@ -31,6 +32,7 @@ const AIChatPages: React.FC = () => {
     const [activeTopic, setActiveTopic] = useState<string>('');
     const [input, setInput] = useState<string>('');
     const [isCreatingTopic, setIsCreatingTopic] = useState<boolean>(false);
+    // 新建标题名称
     const [newTopicTitle, setNewTopicTitle] = useState<string>('');
     const [attachments, setAttachments] = useState<Attachment[]>([]);
     const [open, setOpen] = useState(false);
@@ -39,25 +41,18 @@ const AIChatPages: React.FC = () => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const [openEditModal, setOpenEditModal] = useState(false);
     const [confirmLoading, setConfirmLoading] = useState(false);
+    // 更换标题名称
     const [newTitleName, setNewTitleName] = useState<string>('');
     const curEditTopicId = useRef<string>('')
 
     // --- 拉取会话列表 ---
     useEffect(() => {
-        const getConversations = async () => {
-            const response = await getConversationList();
-            if (response != null) {
-                setConversation(
-                    response.map(item => ({
-                        key: item.conversationId,
-                        label: item.title,
-                        icon: <StarOutlined style={{color: '#bbbbbb'}}/>,
-                        timestamp: Number(item.createTime)
-                    }))
-                )
-            }
+        const getConversationsInit = async () => {
+            await getConversations()
         }
-        getConversations();
+        getConversationsInit().then(() => {
+            return
+        });
     }, []);
 
     // 滚动到最新
@@ -76,8 +71,7 @@ const AIChatPages: React.FC = () => {
             {
                 label: '收藏',
                 key: 'mark',
-                icon: <StopOutlined/>,
-                disabled: true,
+                icon: <StarFilled/>,
             },
             {
                 label: '删除',
@@ -98,21 +92,31 @@ const AIChatPages: React.FC = () => {
                 } else {
                     message.error("删除失败")
                 }
+                await getConversations()
             }
-            await getConversations()
+            if (menuInfo.key === 'mark') {
+                if (await starConversation(conv.key)) {
+                    message.success("操作成功")
+                } else {
+                    message.error("操作失败")
+                }
+                await getConversations()
+            }
         },
     });
 
     const getConversations = async () => {
         let conversationList = await getConversationList();
-        setConversation(
-            conversationList!.map(item => ({
-                key: item.conversationId,
-                label: item.title,
-                icon: <StarOutlined style={{color: '#bbbbbb'}}/>,
-                timestamp: Number(item.createTime)
-            }))
-        );
+        if (conversationList != null) {
+            setConversation(
+                conversationList!.map(item => ({
+                    key: item.conversationId,
+                    label: item.title,
+                    icon: item.isMarked ? <StarTwoTone/> : <StarOutlined style={{color: '#bbbbbb'}}/>,
+                    timestamp: Number(item.createTime)
+                }))
+            );
+        }
     }
 
     // --- 选中话题，拉取消息 ---
@@ -178,12 +182,14 @@ const AIChatPages: React.FC = () => {
                 });
             },
             err => {
-                message.error(err).then(r => setLoading(false));
+                message.error(err).then(() => setLoading(false));
             },
             () => {
                 setLoading(false)
             }
-        )
+        ).then(() => {
+            return
+        })
     };
 
     // --- 创建新话题 ---

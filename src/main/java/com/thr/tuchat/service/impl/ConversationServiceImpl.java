@@ -34,6 +34,7 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         ThrowUtils.throwIf(userId == null, ResultCode.PARAMS_ERROR, "未提供userId");
         LambdaQueryWrapper<Conversation> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Conversation::getUserId, userId)
+                .orderByDesc(Conversation::getIsMarked)
                 .orderByDesc(Conversation::getCreateTime);
         return conversationMapper.selectList(queryWrapper);
     }
@@ -92,5 +93,18 @@ public class ConversationServiceImpl extends ServiceImpl<ConversationMapper, Con
         ThrowUtils.throwIf(!Objects.equals(userId, conversation.getUserId()), ResultCode.NO_AUTH_ERROR,
                 "正在删除不属于自己的conversationId");
         conversationMapper.deleteById(conversationId);
+    }
+
+    @Override
+    public Boolean starConversationById(String conversationId) {
+        ThrowUtils.throwIf(conversationId == null, ResultCode.PARAMS_ERROR, "conversationId为空");
+        String userId = StpUtil.getLoginIdAsString();
+        Conversation conversation = this.getConversationById(conversationId);
+        ThrowUtils.throwIf(Objects.isNull(conversation), ResultCode.NOT_FOUND_ERROR, "不存在的conversation");
+        ThrowUtils.throwIf(!Objects.equals(userId, conversation.getUserId()), ResultCode.NO_AUTH_ERROR,
+                "用户正在收藏不属于自己的conversation");
+        conversation.setIsMarked(!conversation.getIsMarked());
+        conversationMapper.updateById(conversation);
+        return true;
     }
 }

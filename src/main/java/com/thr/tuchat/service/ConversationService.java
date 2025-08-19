@@ -17,4 +17,6 @@ public interface ConversationService extends IService<Conversation> {
     Boolean renameConversation(String conversationId, String newTitle);
 
     void deleteConversationById(String conversationId);
+
+    Boolean starConversationById(String conversationId);
 }

@@ -72,4 +72,20 @@ public class ConversationController {
         Boolean success = conversationManageService.deleteConversationWithMessage(conversationId);
         return ResponseResult.success(success);
     }
+
+    /**
+     * 如果已经收藏就取消收藏，没有收藏则收藏
+     * @param conversationId 会话ID
+     * @return Boolean
+     */
+    @SaCheckLogin
+    @GetMapping("/star")
+    public ResponseResult<Boolean> starConversation(@RequestParam String conversationId) {
+        String userId = StpUtil.getLoginIdAsString();
+        ThrowUtils.throwIf(userId == null, ResultCode.NOT_LOGIN_ERROR, "用户未登录");
+        ThrowUtils.throwIf(StrUtil.isEmptyIfStr(conversationId), ResultCode.PARAMS_ERROR,
+                "conversationId不存在");
+        Boolean success = conversationService.starConversationById(conversationId);
+        return ResponseResult.success(success);
+    }
 }

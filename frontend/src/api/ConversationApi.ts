@@ -35,3 +35,8 @@ export const renameConversation = async (conversation: ConversationRenameRequest
         body: JSON.stringify(conversation)
     })
 }
+
+export const starConversation = async (conversationId: string) : Promise<boolean | null> => {
+    const params = new URLSearchParams({conversationId}).toString();
+    return await fetchAPI(`/conversation/star?${params}`, {})
+}
