@@ -43,18 +43,18 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeBaseMapper, K
     public Boolean addNewKnowledgeBase(String name, String description, String ownerId) {
         ThrowUtils.throwIf(name == null || ownerId == null, ResultCode.PARAMS_ERROR,
                 "name或ownerId为空");
+        ThrowUtils.throwIf(!this.checkKnowledgeBaseName(name), ResultCode.PARAMS_ERROR,
+                "当前知识库name已存在");
         if (!this.checkKnowledgeBaseName(name)) {
             return false;
         }
         String redisKeyForAdd = "knowledgeBase:add:" + name;
         String lockValue = redisDistributedLock.tryLock(redisKeyForAdd, 5);
-        if (lockValue == null) {
-            return false;
-        }
+        ThrowUtils.throwIf(lockValue == null, ResultCode.PARAMS_ERROR,
+                "当前知识库name已存在");
         try {
-            if (!this.checkKnowledgeBaseName(name)) {
-                return false;
-            }
+            ThrowUtils.throwIf(!this.checkKnowledgeBaseName(name), ResultCode.PARAMS_ERROR,
+                    "当前知识库name已存在");
             KnowledgeBase newKnowledgeBase = new KnowledgeBase();
             newKnowledgeBase.setName(name);
             newKnowledgeBase.setDescription(description);

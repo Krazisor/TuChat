@@ -1,5 +1,6 @@
 package com.thr.tuchat.common;
 
+import com.thr.tuchat.exception.BusinessException;
 import com.thr.tuchat.exception.ResultCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -37,6 +38,10 @@ public class ResponseResult<T> implements Serializable {
 
     public static <T> ResponseResult<T> fail(ResultCode errorCode) {
         return new ResponseResult<>(errorCode.getCode(), errorCode.getMessage(), null);
+    }
+
+    public static <T> ResponseResult<T> fail(BusinessException e) {
+        return new ResponseResult<>(e.getCode(), e.getMessage(), null);
     }
 
     // ====== 链式调用 ======

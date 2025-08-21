@@ -15,7 +15,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BusinessException.class)
     public ResponseResult<?> businessExceptionHandler(BusinessException e) {
         log.error("BusinessException", e);
-        return ResponseResult.fail(ResultCode.SYSTEM_ERROR, e.getMessage());
+        return ResponseResult.fail(e);
     }
 
     @ExceptionHandler(RuntimeException.class)
