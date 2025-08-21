@@ -78,3 +78,5 @@ ALTER TABLE file
 # 不看 whitelist，所有用户（除 blacklist）可访问
 # is_public = 0 时
 # 只有 whitelist 中用户（和 owner）可访问
+
+ALTER TABLE knowledge_base ADD UNIQUE KEY uk_name (name);
