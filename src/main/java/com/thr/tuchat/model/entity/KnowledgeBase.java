@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 
 @Data
@@ -13,7 +14,7 @@ import java.sql.Timestamp;
 @NoArgsConstructor
 @Accessors(chain = true)
 @TableName("knowledge_base")
-public class KnowledgeBase {
+public class KnowledgeBase implements Serializable {
 
     // 知识库ID（主键）
     @TableId(value = "knowledge_base_id", type = IdType.ASSIGN_UUID)

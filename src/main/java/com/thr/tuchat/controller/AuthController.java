@@ -49,6 +49,7 @@ public class AuthController {
         try {
             // 第一步：从 JWKS 获取公钥
             PublicKey publicKey = getEcPublicKey();
+            log.info("用户登录，token:{}", token);
 
             // 第二步：校验并解析令牌
             Claims claims = Jwts.parser().verifyWith(publicKey).requireIssuer(logtoConfig.getIssuer()) // 验证发行者

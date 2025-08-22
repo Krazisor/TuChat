@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 
 import com.baomidou.mybatisplus.annotation.*;
@@ -15,7 +16,7 @@ import lombok.experimental.Accessors;
 @NoArgsConstructor
 @Accessors(chain = true)
 @TableName("message")
-public class Message {
+public class Message implements Serializable {
 
     @TableId(value = "message_id", type = IdType.AUTO)
     private Integer messageId;

@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 
 @Data
@@ -13,7 +14,7 @@ import java.sql.Timestamp;
 @NoArgsConstructor
 @Accessors(chain = true)
 @TableName("`user`") // user 是 MySQL 关键字，使用反引号避免冲突
-public class User {
+public class User implements Serializable {
 
     @TableId(value = "user_id")
     private String userId;

@@ -6,6 +6,7 @@ import SideBar from "./Sidebar.tsx"
 import Developing from "../dashboardPages/Developing.tsx";
 import UserProfile from "../dashboardPages/UserProfile.tsx";
 import AIChatPages from "../dashboardPages/AIChatPages.tsx";
+import KnowledgePages from '../dashboardPages/KnowledgePages.tsx';
 
 export type ActiveMenuTypes = 'profile' | 'aiChat' | 'knowledge' | 'database' | 'organization' | 'settings' | 'help';
 
@@ -32,8 +33,8 @@ const Dashboard = () => {
                 return <UserProfile />;
             case 'aiChat':
                 return <AIChatPages />;
-            // case 'knowledge':
-            //     return <Knowledge />;
+            case 'knowledge':
+                return <KnowledgePages />;
             // case 'database':
             //     return <Database />;
             // case 'organization':

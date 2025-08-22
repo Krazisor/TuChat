@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 
 @Data
@@ -13,7 +14,7 @@ import java.sql.Timestamp;
 @NoArgsConstructor
 @Accessors(chain = true)
 @TableName("file")
-public class File {
+public class File implements Serializable {
 
     // 文件ID（主键）
     @TableId(value = "file_id", type = IdType.ASSIGN_UUID)

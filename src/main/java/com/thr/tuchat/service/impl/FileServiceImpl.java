@@ -5,9 +5,14 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.thr.tuchat.mapper.FileMapper;
 import com.thr.tuchat.model.entity.File;
 import com.thr.tuchat.service.FileService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 
+
+@Service
+@Slf4j
 public class FileServiceImpl extends ServiceImpl<FileMapper, File> implements FileService {
 
 

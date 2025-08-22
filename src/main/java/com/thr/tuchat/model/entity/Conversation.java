@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 
 import com.baomidou.mybatisplus.annotation.*;
@@ -20,7 +21,7 @@ import java.sql.Timestamp;
 @NoArgsConstructor
 @Accessors(chain = true)
 @TableName("conversation")
-public class Conversation {
+public class Conversation implements Serializable {
 
     // 主键使用 MyBatis-Plus 内置的随机 UUID（String）
     @TableId(value = "conversation_id", type = IdType.ASSIGN_UUID)
