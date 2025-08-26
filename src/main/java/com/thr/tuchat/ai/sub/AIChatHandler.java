@@ -77,11 +77,15 @@ public class AIChatHandler {
         messageService.addNewMessage(message);
     }
 
-    public void initAndInsertAssistantMessageWithConversationId(String conversationId, String question) {
+    public void initAndInsertAssistantMessageWithConversationId(String conversationId, String question, Boolean isError) {
         com.thr.tuchat.model.entity.Message aiMessage = new com.thr.tuchat.model.entity.Message();
         aiMessage.setConversationId(conversationId);
         aiMessage.setRole(AIMessageType.ASSISTANT.getRole());
-        aiMessage.setContent(question);
+        if (isError) {
+            aiMessage.setErrorMessage(question);
+        } else {
+            aiMessage.setContent(question);
+        }
         messageService.addNewMessage(aiMessage);
     }
 }
