@@ -30,7 +30,6 @@ public class AuthInterceptor implements HandlerInterceptor {
                     isApiKeyValid = true;
                 }
             } catch (Exception e) {
-                // ApiKey 校验失败，不抛出异常，继续下一步校验
                 log.info("ApiKey 校验失败，不抛出异常，继续下一步校验");
             }
         }
