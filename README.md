@@ -1,4 +1,4 @@
-### 关于weaviate的配置
+#关于weaviate的配置
 ## 使用docker的docker-compose.yml进行配置
     version: '3.8'
     
