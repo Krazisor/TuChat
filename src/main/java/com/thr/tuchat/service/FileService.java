@@ -10,6 +10,8 @@ import java.util.List;
 public interface FileService extends IService<File> {
     List<FileListResponse> getFileListByKnowledgeBaseId(String knowledgeBaseId);
 
+    List<FileListResponse> transferFileToFileListResponse(List<File> fileList);
+
     String uploadFileToKnowledgeBase(MultipartFile file, String knowledgeBaseId);
 
     String uploadFileToMinIO(MultipartFile file);

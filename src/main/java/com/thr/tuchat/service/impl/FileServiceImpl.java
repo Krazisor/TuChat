@@ -17,7 +17,6 @@ import com.thr.tuchat.model.entity.KnowledgeBase;
 import com.thr.tuchat.service.FileService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -56,16 +55,8 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File> implements Fi
             return null;
         }
         // 知识库文件不为空，但是请求者是知识库的拥有者，那么一样全部返回
-        List<FileListResponse> fileListResponseList;
         if (knowledgeBaseList.getFirst().getOwnerId().equals(userId)) {
-            fileListResponseList = fileList.stream().map(file ->
-                    new FileListResponse(
-                            file.getFileId(), file.getFileName(), file.getFileSize(), file.getKnowledgeBaseId(),
-                            file.getOwnerId(), file.getUploadTime(), file.getIsPublic(), file.getWhitelist(),
-                            file.getBlacklist()
-                    )
-            ).collect(Collectors.toList());
-            return fileListResponseList;
+            return this.transferFileToFileListResponse(fileList);
         }
         // 用户可能只是该知识库的编辑者或者浏览者，那么我们就要对其进行文件级别的过滤了
         List<File> canAccessFileList = new ArrayList<>();
@@ -80,14 +71,23 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File> implements Fi
                 }
             }
         }
-        fileListResponseList = fileList.stream().map(file ->
+        return this.transferFileToFileListResponse(canAccessFileList);
+    }
+
+    /**
+     * 类型转换
+     * @param fileList 文件列表
+     * @return FileListResponse列表
+     */
+    @Override
+    public List<FileListResponse> transferFileToFileListResponse(List<File> fileList) {
+        return fileList.stream().map(file ->
                 new FileListResponse(
                         file.getFileId(), file.getFileName(), file.getFileSize(), file.getKnowledgeBaseId(),
                         file.getOwnerId(), file.getUploadTime(), file.getIsPublic(), file.getWhitelist(),
                         file.getBlacklist()
                 )
         ).collect(Collectors.toList());
-        return fileListResponseList;
     }
 
     @Override
