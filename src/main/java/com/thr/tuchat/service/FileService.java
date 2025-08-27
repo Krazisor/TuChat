@@ -1,11 +1,18 @@
 package com.thr.tuchat.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.thr.tuchat.model.dto.FileListResponse;
 import com.thr.tuchat.model.entity.File;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 public interface FileService extends IService<File> {
-    String uploadFile (MultipartFile file);
+    List<FileListResponse> getFileListByKnowledgeBaseId(String knowledgeBaseId);
+
+    String uploadFileToKnowledgeBase(MultipartFile file, String knowledgeBaseId);
+
+    String uploadFileToMinIO(MultipartFile file);
 
     Boolean canAccess(File file, String userId);
 }

@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Card,
     Avatar,
@@ -16,15 +16,14 @@ import {
 import {
     UserOutlined,
     MailOutlined,
-    LockOutlined,
     CalendarOutlined,
     IdcardOutlined,
     UploadOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import {useAppDispatch, useAppSelector} from "../../stores/StoreHook.ts";
-import {getUserBaseInfo, updateUserAvatar} from "../../api/UserApi.ts";
-import {setUserInfo} from "../../stores/slices/userSlices.ts";
+import { useAppDispatch, useAppSelector } from "../../stores/StoreHook.ts";
+import { getUserBaseInfo, updateUserAvatar } from "../../api/UserApi.ts";
+import { setUserInfo } from "../../stores/slices/userSlices.ts";
 
 const { Title, Text } = Typography;
 
@@ -34,7 +33,6 @@ const UserProfile = () => {
         userId: '123456',
         userName: 'user',
         avatar: '',
-        password: '••••••••••',
         createTime: '2023-01-15T08:30:00',
         email: 'user@example.com'
     });
@@ -83,7 +81,6 @@ const UserProfile = () => {
         if (userSlice.userInfo !== null) {
             setUserData({
                 ...userSlice.userInfo,
-                password: '••••••••••',
             })
             form.setFieldsValue({
                 userName: userSlice.userInfo.userName,
@@ -120,8 +117,6 @@ const UserProfile = () => {
                 setUserData({
                     ...userData,
                     userName: values.userName,
-                    // 只有在选择修改密码时才更新密码
-                    password: changePassword ? '••••••••••' : userData.password,
                     email: values.email
                 });
 

@@ -1,29 +1,25 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Modal, Input, List, Checkbox, message, Card, Row, Col, Empty } from 'antd';
-import { PlusOutlined, DeleteOutlined, EyeOutlined, MoreOutlined, UserOutlined, EditOutlined } from '@ant-design/icons';
+import { Button, Modal, Input, List, Checkbox, message, Card, Row, Col, Empty, type UploadProps } from 'antd';
+import { PlusOutlined, DeleteOutlined, EyeOutlined, MoreOutlined, UserOutlined, EditOutlined, InboxOutlined } from '@ant-design/icons';
 import { addKnowledgeBase, getKnowledgeBaseList, type KnowledgeBaseListResponse, type NewKnowledgeBaseRequest } from '../../api/KnowledgeBaseApi';
+import Dragger from 'antd/es/upload/Dragger';
+import { getFileListByKnowledgeBaseId, uploadFilesToKnowledgeBase, type FileListResponse } from '../../api/FileApi';
 
-interface FileItem {
-    id: string;
-    name: string;
-    kbId: string;
-}
-
-const initialFiles: FileItem[] = [
-    { id: 'f1', name: 'API说明.pdf', kbId: '1' },
-    { id: 'f2', name: '用户手册.docx', kbId: '1' },
-    { id: 'f3', name: '架构图.png', kbId: '2' },
-];
+// const initialFiles: FileListResponse[] = [
+//     { id: 'f1', name: 'API说明.pdf', kbId: '1' },
+//     { id: 'f2', name: '用户手册.docx', kbId: '1' },
+//     { id: 'f3', name: '架构图.png', kbId: '2' },
+// ];
 
 const KnowledgePages: React.FC = () => {
     // 知识库列表
     const [kbList, setKbList] = useState<KnowledgeBaseListResponse[]>([]);
-    const [fileList, setFileList] = useState<FileItem[]>(initialFiles);
+    const [fileList, setFileList] = useState<FileListResponse[]>([]);
     const [selectedKbId, setSelectedKbId] = useState<string>('');
     const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
     const [kbModalVisible, setKbModalVisible] = useState(false);
     const [fileModalVisible, setFileModalVisible] = useState(false);
-    const [previewFile, setPreviewFile] = useState<FileItem | null>(null);
+    const [previewFile, setPreviewFile] = useState<FileListResponse | null>(null);
     const [newKbName, setNewKbName] = useState('');
     const [newKbDescription, setNewKbDescription] = useState<string | null>(null);
     const [newFileName, setNewFileName] = useState('');
@@ -40,10 +36,24 @@ const KnowledgePages: React.FC = () => {
         }
     }
 
+    const fetchFileList = async (knowledgeBaseId: string) => {
+        const data = await getFileListByKnowledgeBaseId(knowledgeBaseId);
+        if (data) {
+            setFileList(data);
+        } else {
+            message.error('获取文件列表失败');
+        }
+    }
+
+    useEffect(() => {
+        if (selectedKbId) {
+            fetchFileList(selectedKbId);
+        }
+    }, [selectedKbId]);
+
     useEffect(() => {
         fetchKbList();
-    }
-        , []);
+    }, []);
 
     const handleKbSelect = (id: string) => {
         setSelectedKbId(id);
@@ -59,7 +69,7 @@ const KnowledgePages: React.FC = () => {
             message.warning('请选择要删除的文件');
             return;
         }
-        setFileList(fileList.filter(f => !selectedFiles.includes(f.id)));
+        setFileList(fileList.filter(f => !selectedFiles.includes(f.fileId)));
         setSelectedFiles([]);
         message.success('删除成功');
     };
@@ -82,14 +92,50 @@ const KnowledgePages: React.FC = () => {
     };
 
     const handleAddFile = () => {
-        if (!newFileName.trim()) return;
-        setFileList([...fileList, { id: Date.now().toString(), name: newFileName, kbId: selectedKbId }]);
-        setNewFileName('');
-        setFileModalVisible(false);
-        message.success('文件创建成功');
+        // if (!newFileName.trim()) return;
+        // setFileList([...fileList, { id: Date.now().toString(), name: newFileName, kbId: selectedKbId }]);
+        // setNewFileName('');
+        // setFileModalVisible(false);
+        // message.success('文件创建成功');
     };
 
-    const filesOfSelectedKb = fileList.filter(f => f.kbId === selectedKbId);
+    const props: UploadProps = {
+        name: 'file',
+        multiple: true,
+        customRequest: async (options) => {
+            // 只允许md文件上传
+            console.log(options)
+            const files = Array.isArray(options.file) ? options.file : [options.file];
+            const mdFiles = files.filter(f => f.name.endsWith('.md'));
+            if (mdFiles.length === 0) {
+                message.error('仅支持上传md文件');
+                return;
+            }
+            if (!selectedKbId) {
+                message.error('请先选择知识库');
+                return;
+            }
+            try {
+                const res = await uploadFilesToKnowledgeBase(mdFiles, selectedKbId);
+                options.onSuccess && options.onSuccess(res, options.file);
+            } catch (err) {
+                options.onError && options.onError(err);
+            }
+        },
+        onChange(info) {
+            // 这里可以根据需要处理 fileList
+            if (info.file.status === 'done') {
+                message.success(`${info.file.name} 上传成功。`);
+            } else if (info.file.status === 'error') {
+                message.error(`${info.file.name} 文件上传失败。`);
+            }
+        },
+        onDrop(e) {
+            console.log('Dropped files', e.dataTransfer.files);
+        },
+    };
+
+    const filesOfSelectedKb = fileList.filter(f => f.knowledgeBaseId === selectedKbId);
 
     return (
         <div style={{ display: 'flex', height: '100%' }}>
@@ -152,10 +198,10 @@ const KnowledgePages: React.FC = () => {
                                                 maxWidth: 180,
                                                 cursor: kb.description ? 'pointer' : 'default',
                                                 lineHeight: '20px',
-                                                height: (kb.description && kb.description.length <= 20) || !kb.description ? '20px' : '40px',
-                                                alignItems: kb.description && kb.description.length <= 20 ? 'center' : 'normal',
-                                                display: kb.description && kb.description.length <= 20 ? 'flex' : '-webkit-box',
-                                                justifyContent: kb.description && kb.description.length <= 20 ? 'center' : 'normal',
+                                                height: (kb.description && kb.description.length <= 13) || !kb.description ? '20px' : '40px',
+                                                alignItems: kb.description && kb.description.length <= 13 ? 'center' : 'normal',
+                                                display: kb.description && kb.description.length <= 13 ? 'flex' : '-webkit-box',
+                                                justifyContent: kb.description && kb.description.length <= 13 ? 'center' : 'normal',
                                             }}
                                             title={kb.description || ''}
                                         >
@@ -186,6 +232,7 @@ const KnowledgePages: React.FC = () => {
                             icon={<PlusOutlined />}
                             onClick={() => setFileModalVisible(true)}
                             style={{ marginRight: 8 }}
+                            disabled={!selectedKbId}
                         >
                             新建文件
                         </Button>
@@ -193,7 +240,7 @@ const KnowledgePages: React.FC = () => {
                             danger
                             icon={<DeleteOutlined />}
                             onClick={handleBatchDelete}
-                            disabled={selectedFiles.length === 0}
+                            disabled={selectedFiles.length === 0 || !selectedKbId}
                         >
                             批量删除
                         </Button>
@@ -204,19 +251,19 @@ const KnowledgePages: React.FC = () => {
                 </div>
                 <Row gutter={[16, 16]}>
                     {filesOfSelectedKb.map(file => (
-                        <Col key={file.id} xs={24} sm={12} md={8} lg={6}>
+                        <Col key={file.fileId} xs={24} sm={12} md={8} lg={6}>
                             <Card
                                 hoverable
                                 actions={[
                                     <EyeOutlined key="preview" onClick={() => setPreviewFile(file)} />,
                                     <Checkbox
-                                        checked={selectedFiles.includes(file.id)}
-                                        onChange={e => handleFileCheck(file.id, e.target.checked)}
+                                        checked={selectedFiles.includes(file.fileId)}
+                                        onChange={e => handleFileCheck(file.fileId, e.target.checked)}
                                     />,
                                 ]}
                                 style={{ borderRadius: 8 }}
                             >
-                                <Card.Meta title={file.name} />
+                                <Card.Meta title={file.fileName} />
                             </Card>
                         </Col>
                     ))}
@@ -229,7 +276,7 @@ const KnowledgePages: React.FC = () => {
                     onCancel={() => setPreviewFile(null)}
                 >
                     <div>
-                        <strong>文件名：</strong> {previewFile?.name}
+                        <strong>文件名：</strong> {previewFile?.fileName}
                         <div style={{ marginTop: 16, color: '#888' }}>（此处可集成文件预览组件）</div>
                     </div>
                 </Modal>
@@ -265,12 +312,15 @@ const KnowledgePages: React.FC = () => {
                     onOk={handleAddFile}
                     onCancel={() => setFileModalVisible(false)}
                 >
-                    <Input
-                        placeholder="输入文件名称"
-                        value={newFileName}
-                        onChange={e => setNewFileName(e.target.value)}
-                        maxLength={30}
-                    />
+                    <Dragger {...props}>
+                        <p className="ant-upload-drag-icon">
+                            <InboxOutlined />
+                        </p>
+                        <p className="ant-upload-text">点击或拖拽文件到此区域上传</p>
+                        <p className="ant-upload-hint">
+                            仅支持上传md文件
+                        </p>
+                    </Dragger>
                 </Modal>
             </div>
         </div>

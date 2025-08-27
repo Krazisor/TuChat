@@ -5,10 +5,11 @@ import useApp from "antd/es/app/useApp";
 import HomePage from "../../pages/Homepage.tsx";
 import { useNavigate } from "react-router";
 import FullScreenLoading from "../universalTool/FullScreenLoading.tsx";
-import {useAppSelector} from "../../stores/StoreHook.ts";
+import { useAppSelector } from "../../stores/StoreHook.ts";
+import { env } from "../../env.ts";
 
 const ProtectedRoute: React.FC<{ element: React.ReactNode }> = ({ element }) => {
-    const { isAuthenticated, getAccessToken } = useLogto();
+    const { isAuthenticated, getAccessToken, signOut } = useLogto();
     const user = useAppSelector(state => state.user)
     const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
     const { message } = useApp()
@@ -18,6 +19,7 @@ const ProtectedRoute: React.FC<{ element: React.ReactNode }> = ({ element }) => 
             const token = await getAccessToken();
             if (!token || !user.isSignedIn) {
                 message.info('请先登录');
+                signOut(env.VITE_APP_URL)
                 setIsAuthorized(false);
                 nav('/')
             } else {

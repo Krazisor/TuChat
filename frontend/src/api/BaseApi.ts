@@ -1,6 +1,6 @@
-import {env} from "../env.ts";
+import { env } from "../env.ts";
 import store from "../stores/BaseStore.ts";
-import {message} from "antd";
+import { message } from "antd";
 
 export const BASE_URL = env.VITE_APP_API_URL
 
@@ -15,13 +15,20 @@ export interface Result<T> {
  */
 export const fetchAPI = async <T>(url: string, options?: RequestInit): Promise<T | null> => {
     if (!url.includes('/login')) {
-        //非登录接口自动加上请求头
+        const satoken = store.getState().user.saToken ?? '';
+        // 如果 body 不是 FormData 再加 Content-Type: application/json
         if (options) {
-            const satoken = store.getState().user.saToken ?? '';
-            options.headers = {
-                'satoken': `${satoken}`,
-                'Content-Type': 'application/json',
-                ...options.headers,
+            if (options.body instanceof FormData) {
+                options.headers = {
+                    'satoken': `${satoken}`,
+                    ...options.headers,
+                };
+            } else {
+                options.headers = {
+                    'satoken': `${satoken}`,
+                    'Content-Type': 'application/json',
+                    ...options.headers,
+                };
             }
         }
     }
