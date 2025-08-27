@@ -14,5 +14,7 @@ public interface FileService extends IService<File> {
 
     String uploadFileToKnowledgeBase(MultipartFile file, String knowledgeBaseId);
 
+    List<String> getFileIdsByKnowledgeBaseId(String knowledgeBaseId);
+
     Boolean canAccess(File file, String userId);
 }

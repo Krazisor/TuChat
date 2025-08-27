@@ -6,7 +6,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.thr.tuchat.exception.BusinessException;
 import com.thr.tuchat.exception.ResultCode;
 import com.thr.tuchat.exception.ThrowUtils;
 import com.thr.tuchat.mapper.FileMapper;
@@ -39,6 +38,11 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File> implements Fi
     @Resource
     private KnowledgeBaseMapper knowledgeBaseMapper;
 
+    /**
+     * 根据数据库ID获取文件列表
+     * @param knowledgeBaseId 数据库ID
+     * @return 文件列表
+     */
     @Override
     public List<FileListResponse> getFileListByKnowledgeBaseId(String knowledgeBaseId) {
         ThrowUtils.throwIf(StrUtil.isEmptyIfStr(knowledgeBaseId), ResultCode.PARAMS_ERROR, "知识库ID为空");
@@ -111,7 +115,7 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File> implements Fi
         fileInfo.setFileSize(file.getSize());
         fileInfo.setOwnerId(StpUtil.getLoginIdAsString());
         fileInfo.setKnowledgeBaseId(knowledgeBaseId);
-        // 文件刚刚完成上传，暂时不可见
+        // 文件刚刚上传，暂时不可见
         fileInfo.setIsPublic(0);
         String url = minioService.upload(file);
         ThrowUtils.throwIf(StringUtils.isBlank(url), ResultCode.OPERATION_ERROR, "文件url为空");
@@ -119,6 +123,14 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File> implements Fi
         int count = fileMapper.insert(fileInfo);
         ThrowUtils.throwIf(count != 1, ResultCode.OPERATION_ERROR, "文件内容无法上传到数据库");
         return fileInfo.getFileId();
+    }
+
+    @Override
+    public List<String> getFileIdsByKnowledgeBaseId(String knowledgeBaseId) {
+        LambdaQueryWrapper<File> lambdaQueryWrapper = new LambdaQueryWrapper<File>()
+                .select(File::getFileId)
+                .eq(File::getKnowledgeBaseId, knowledgeBaseId);
+        return fileMapper.selectList(lambdaQueryWrapper).stream().map(File::getFileId).toList();
     }
 
     /*

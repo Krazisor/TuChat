@@ -44,7 +44,7 @@
                       -Headers @{'Content-Type' = 'application/json'} `
                       -Body $body
 ### 如果是linux环境
-    curl -X POST http://localhost:8080/v1/schema \
+    curl -X POST http://localhost:50050/v1/schema \
          -H "Content-Type: application/json" \
          -d @document-class.json
     

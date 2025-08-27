@@ -33,7 +33,7 @@ public class KnowledgeBaseController {
     }
 
     @PostMapping("/add")
-    public ResponseResult<String> add(@RequestBody NewKnowledgeBaseRequest newKnowledgeBaseRequest){
+    public ResponseResult<String> addKnowledgeBase(@RequestBody NewKnowledgeBaseRequest newKnowledgeBaseRequest){
         String userId = StpUtil.getLoginIdAsString();
         ThrowUtils.throwIf(userId == null, ResultCode.NOT_LOGIN_ERROR, "用户未登录");
         log.info("用户:{} 正在请求新建知识库: {}", userId,  newKnowledgeBaseRequest);
@@ -44,5 +44,12 @@ public class KnowledgeBaseController {
         return ResponseResult.success(knowledgeBaseId);
     }
 
-
+    @GetMapping("/delete")
+    public ResponseResult<Boolean> deleteKnowledgeBase (@RequestParam String knowledgeBaseId) {
+        String userId = StpUtil.getLoginIdAsString();
+        ThrowUtils.throwIf(userId == null, ResultCode.NOT_LOGIN_ERROR, "用户未登录");
+        log.info("用户:{}, 正在删除知识库: {}", userId, knowledgeBaseId);
+        Boolean ans = knowledgeBaseService.deleteKnowledgeBaseWithFile(knowledgeBaseId);
+        return ResponseResult.success(ans);
+    }
 }

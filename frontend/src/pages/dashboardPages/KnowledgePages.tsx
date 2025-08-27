@@ -4,6 +4,7 @@ import { PlusOutlined, DeleteOutlined, EyeOutlined, MoreOutlined, UserOutlined, 
 import { addKnowledgeBase, getKnowledgeBaseList, type KnowledgeBaseListResponse, type NewKnowledgeBaseRequest } from '../../api/KnowledgeBaseApi';
 import Dragger from 'antd/es/upload/Dragger';
 import { getFileListByKnowledgeBaseId, uploadFilesToKnowledgeBase, type FileListResponse } from '../../api/FileApi';
+import KnowledgeBaseInfoModal from '../../components/knowledgeComponents/KnowledgeBaseInfoModal';
 
 // const initialFiles: FileListResponse[] = [
 //     { id: 'f1', name: 'API说明.pdf', kbId: '1' },
@@ -14,16 +15,20 @@ import { getFileListByKnowledgeBaseId, uploadFilesToKnowledgeBase, type FileList
 const KnowledgePages: React.FC = () => {
     // 知识库列表
     const [kbList, setKbList] = useState<KnowledgeBaseListResponse[]>([]);
+    // 文件列表
     const [fileList, setFileList] = useState<FileListResponse[]>([]);
+    // 当前选择的知识库Id
     const [selectedKbId, setSelectedKbId] = useState<string>('');
+    // 当前选择的文件Id
     const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
+    // 新建知识库弹窗控制开关
     const [kbModalVisible, setKbModalVisible] = useState(false);
     const [fileModalVisible, setFileModalVisible] = useState(false);
     const [previewFile, setPreviewFile] = useState<FileListResponse | null>(null);
     const [newKbName, setNewKbName] = useState('');
     const [newKbDescription, setNewKbDescription] = useState<string | null>(null);
-    const [newFileName, setNewFileName] = useState('');
 
+    // 获取知识库列表
     const fetchKbList = async () => {
         const data = await getKnowledgeBaseList();
         if (data) {
@@ -36,6 +41,7 @@ const KnowledgePages: React.FC = () => {
         }
     }
 
+    // 获取文件列表
     const fetchFileList = async (knowledgeBaseId: string) => {
         const data = await getFileListByKnowledgeBaseId(knowledgeBaseId);
         if (data) {
@@ -45,12 +51,14 @@ const KnowledgePages: React.FC = () => {
         }
     }
 
+    // 监听知识库Id变化获取文件列表
     useEffect(() => {
         if (selectedKbId) {
             fetchFileList(selectedKbId);
         }
     }, [selectedKbId]);
 
+    // 在页面加载之初自动获取知识库列表
     useEffect(() => {
         fetchKbList();
     }, []);
@@ -91,6 +99,7 @@ const KnowledgePages: React.FC = () => {
         }
     };
 
+    // 新建文件弹窗确认按钮操作逻辑
     const handleAddFile = () => {
         // if (!newFileName.trim()) return;
         // setFileList([...fileList, { id: Date.now().toString(), name: newFileName, kbId: selectedKbId }]);
@@ -323,6 +332,16 @@ const KnowledgePages: React.FC = () => {
                     </Dragger>
                 </Modal>
             </div>
+            <KnowledgeBaseInfoModal
+                open={!!selectedKbId}
+                onClose={() => setSelectedKbId(null)}
+                kbInfo={kbList.find(kb => kb.knowledgeBaseId === selectedKbId) || null}
+                currentUserRole={kbList.find(kb => kb.knowledgeBaseId === selectedKbId)?.role || null}
+                onConfigEditor={() => { }}
+                onConfigViewer={() => { }}
+            // onDeleteKb={() => {}}
+            // onChangeOwner={handleChangeOwner}
+            />
         </div>
     );
 };

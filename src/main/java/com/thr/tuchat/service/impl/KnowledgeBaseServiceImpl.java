@@ -1,5 +1,6 @@
 package com.thr.tuchat.service.impl;
 
+import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.thr.tuchat.constant.RoleEnum;
@@ -11,6 +12,7 @@ import com.thr.tuchat.mapper.KnowledgeBaseMemberMapper;
 import com.thr.tuchat.model.dto.KnowledgeBaseListResponse;
 import com.thr.tuchat.model.entity.KnowledgeBase;
 import com.thr.tuchat.model.entity.KnowledgeBaseMember;
+import com.thr.tuchat.service.FileService;
 import com.thr.tuchat.service.KnowledgeBaseService;
 import com.thr.tuchat.util.RedisDistributedLock;
 import jakarta.annotation.Resource;
@@ -22,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -38,6 +42,9 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeBaseMapper, K
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+
+    @Resource
+    private FileService fileService;
 
     /*
      * 我们希望数据库不是同名的
@@ -58,12 +65,13 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeBaseMapper, K
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String addNewKnowledgeBase(String name, String description, String ownerId) {
-        ThrowUtils.throwIf(name == null || ownerId == null, ResultCode.PARAMS_ERROR, "name或ownerId为空");
+        ThrowUtils.throwIf(name == null || ownerId == null, ResultCode.PARAMS_ERROR,
+                "name或ownerId为空");
         ThrowUtils.throwIf(name.length() > 10, ResultCode.PARAMS_ERROR, "name长度不得大于10");
         String redisKeyForAdd = "knowledgeBase:add:" + name;
-        String lockValue = redisDistributedLock.tryLock(redisKeyForAdd, 5);
-        ThrowUtils.throwIf(lockValue == null, ResultCode.PARAMS_ERROR, "当前知识库name正在被创建，请稍后重试");
-
+        String lockValue = redisDistributedLock.tryLock(redisKeyForAdd, 30);
+        ThrowUtils.throwIf(lockValue == null, ResultCode.PARAMS_ERROR,
+                "当前知识库name正在被创建，请稍后重试");
         try {
             // 1. 检查name是否可用，redis预查
             String redisKey = "knowledgeBase:name:" + name;
@@ -74,7 +82,7 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeBaseMapper, K
             queryWrapper.eq(KnowledgeBase::getName, name);
             boolean exists = knowledgeBaseMapper.selectCount(queryWrapper) > 0;
             if (exists) {
-                stringRedisTemplate.opsForValue().set(redisKey, "1");
+                stringRedisTemplate.opsForValue().set(redisKey, "1", 5, TimeUnit.MINUTES);
                 throw new BusinessException(ResultCode.PARAMS_ERROR, "当前知识库name已存在");
             }
 
@@ -106,14 +114,56 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeBaseMapper, K
         }
     }
 
-
     @Override
     public List<KnowledgeBaseListResponse> getKnowledgeBaseList(String ownerId) {
         ThrowUtils.throwIf(ownerId == null, ResultCode.PARAMS_ERROR, "ownerId为空");
         return knowledgeBaseMapper.selectKnowledgeBaseListByUser(ownerId);
     }
 
+    public Boolean updateBasicKnowledgeBaseInfo () {
+        return true;
+    }
 
-
+    /**
+     * WARN!!!: 删除知识库意味着删除所有关联文件和权限记录
+     * 使用分布式锁，防止反复重复点击导致报错等影响用户体验的事情
+     * 涉及多表删除，如果不加锁可能因为回滚等问题造成脏数据
+     * @param knowledgeBaseId 知识库Id
+     * @return 是否删除成功
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean deleteKnowledgeBaseWithFile(String knowledgeBaseId) {
+        // 判断你是不是知识库的主人
+        LambdaQueryWrapper<KnowledgeBase> queryWrapperFirst = new LambdaQueryWrapper<KnowledgeBase>()
+                .eq(KnowledgeBase::getKnowledgeBaseId, knowledgeBaseId);
+        KnowledgeBase knowledgeBase = knowledgeBaseMapper.selectOne(queryWrapperFirst);
+        String userId = StpUtil.getLoginIdAsString();
+        ThrowUtils.throwIf(!userId.equals(knowledgeBase.getOwnerId()), ResultCode.NO_AUTH_ERROR,
+                "用户企图删除不属于自己的知识库");
+        // 上分布式锁
+        String redisKeyForDelete = "knowledgeBase:delete:" + knowledgeBaseId;
+        String lockValue = redisDistributedLock.tryLock(redisKeyForDelete, 30);
+        ThrowUtils.throwIf(lockValue == null, ResultCode.PARAMS_ERROR,
+                "当前知识库name正在被删除，请不要重复提交请求");
+        try {
+            // 首先进行删除的是知识库中文件
+            List<String> fileIds = fileService.getFileIdsByKnowledgeBaseId(knowledgeBaseId);
+            fileService.removeByIds(fileIds);
+            // 然后删除的是知识库权限关联表
+            LambdaQueryWrapper<KnowledgeBaseMember> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.select(KnowledgeBaseMember::getId);
+            queryWrapper.eq(KnowledgeBaseMember::getKnowledgeBaseId, knowledgeBaseId);
+            List<String> memberIds = knowledgeBaseMemberMapper.selectList(queryWrapper)
+                    .stream().map(KnowledgeBaseMember::getUserId).collect(Collectors.toList());
+            knowledgeBaseMemberMapper.deleteByIds(memberIds);
+            // 最后删除数据库本身
+            knowledgeBaseMapper.deleteById(knowledgeBaseId);
+            return true;
+        } finally {
+            // 任务完成，释放分布式锁
+            redisDistributedLock.unlock(redisKeyForDelete, lockValue);
+        }
+    }
 
 }
