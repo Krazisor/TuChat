@@ -337,8 +337,8 @@ const KnowledgePages: React.FC = () => {
                 onClose={() => setSelectedKbId(null)}
                 kbInfo={kbList.find(kb => kb.knowledgeBaseId === selectedKbId) || null}
                 currentUserRole={kbList.find(kb => kb.knowledgeBaseId === selectedKbId)?.role || null}
-                onConfigEditor={() => { }}
-                onConfigViewer={() => { }}
+                // onConfigEditor={() => { }}
+                // onConfigViewer={() => { }}
             // onDeleteKb={() => {}}
             // onChangeOwner={handleChangeOwner}
             />

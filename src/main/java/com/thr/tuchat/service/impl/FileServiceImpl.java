@@ -56,7 +56,7 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File> implements Fi
         List<File> fileList = fileMapper.selectList(fileLambdaQueryWrapper);
         // 知识库文件为空，直接返回
         if (fileList.isEmpty()) {
-            return null;
+            return new ArrayList<>();
         }
         // 知识库文件不为空，但是请求者是知识库的拥有者，那么一样全部返回
         if (knowledgeBaseList.getFirst().getOwnerId().equals(userId)) {

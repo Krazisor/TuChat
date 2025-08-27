@@ -3,23 +3,22 @@
     version: '3.8'
     
     services:
-    weaviate:
-    image: cr.weaviate.io/semitechnologies/weaviate:1.31.0
-    container_name: weaviate
-    restart: unless-stopped
+        weaviate:
+            image: cr.weaviate.io/semitechnologies/weaviate:1.31.0
+            container_name: weaviate
+            restart: unless-stopped
 
-    ports:
-      - "50050:8080"
-      - "50051:50051"
-      
-    environment:
-      QUERY_DEFAULTS_LIMIT: 50
-      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
-      PERSISTENCE_DATA_PATH: "/var/lib/weaviate"
-      CLUSTER_HOSTNAME: 'node1'
-    volumes:
-      - weaviate_data:/var/lib/weaviate
-
+            ports:
+              - "50050:8080"
+              - "50051:50051"
+              
+            environment:
+              QUERY_DEFAULTS_LIMIT: 50
+              AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
+              PERSISTENCE_DATA_PATH: "/var/lib/weaviate"
+              CLUSTER_HOSTNAME: 'node1'
+            volumes:
+              - weaviate_data:/var/lib/weaviate
     volumes:
         weaviate_data:
 ## 通过请求创建相应的class文件名为document-class.json
