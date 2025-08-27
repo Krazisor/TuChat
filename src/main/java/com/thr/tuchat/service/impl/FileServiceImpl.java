@@ -90,6 +90,12 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File> implements Fi
         ).collect(Collectors.toList());
     }
 
+    /**
+     * 上传文件到数据库，内置了上传到MINIO
+     * @param file 文件
+     * @param knowledgeBaseId 知识库Id
+     * @return 文件Id
+     */
     @Override
     public String uploadFileToKnowledgeBase(MultipartFile file, String knowledgeBaseId) {
         ThrowUtils.throwIf(file == null || file.isEmpty(), ResultCode.PARAMS_ERROR, "无法检测到文件");
@@ -107,23 +113,13 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File> implements Fi
         fileInfo.setKnowledgeBaseId(knowledgeBaseId);
         // 文件刚刚完成上传，暂时不可见
         fileInfo.setIsPublic(0);
-        String url = this.uploadFileToMinIO(file);
+        String url = minioService.upload(file);
         ThrowUtils.throwIf(StringUtils.isBlank(url), ResultCode.OPERATION_ERROR, "文件url为空");
         fileInfo.setUrl(url);
         int count = fileMapper.insert(fileInfo);
         ThrowUtils.throwIf(count != 1, ResultCode.OPERATION_ERROR, "文件内容无法上传到数据库");
         return fileInfo.getFileId();
     }
-
-    @Override
-    public String uploadFileToMinIO(MultipartFile file) {
-        try {
-            return minioService.upload(file);
-        } catch (Exception e) {
-            throw new BusinessException(ResultCode.OPERATION_ERROR, "上传文件出现了不可预知的错误");
-        }
-    }
-
 
     /*
         注意：这里的权限校验无法进行对于知识库owner可以无视黑白名单的校验

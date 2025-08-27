@@ -1,6 +1,8 @@
 package com.thr.tuchat.service.impl;
 
 import com.thr.tuchat.config.MinioConfig;
+import com.thr.tuchat.exception.BusinessException;
+import com.thr.tuchat.exception.ResultCode;
 import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
@@ -53,7 +55,7 @@ public class MinioService {
     }
 
     // 上传文件并返回访问URL
-    public String upload(MultipartFile file) throws Exception {
+    public String upload(MultipartFile file){
         // 生成 UUID 文件名并保留后缀
         String originalFilename = file.getOriginalFilename();
         String ext = "";
@@ -64,14 +66,18 @@ public class MinioService {
         String uuidFileName = UUID.randomUUID().toString().replace("-", "") + ext;
 
         // 上传
-        minioClient.putObject(
-                PutObjectArgs.builder()
-                        .bucket(minioConfig.getBucketName())
-                        .object(uuidFileName)
-                        .stream(file.getInputStream(), file.getSize(), -1)
-                        .contentType(file.getContentType())
-                        .build()
-        );
+        try {
+            minioClient.putObject(
+                    PutObjectArgs.builder()
+                            .bucket(minioConfig.getBucketName())
+                            .object(uuidFileName)
+                            .stream(file.getInputStream(), file.getSize(), -1)
+                            .contentType(file.getContentType())
+                            .build()
+            );
+        } catch (Exception e) {
+            throw new BusinessException(ResultCode.SYSTEM_ERROR, "上传至MINIO出现问题" + e.getMessage());
+        }
 
         // 构建文件URL（外链）
         return minioConfig.getEndpoint() + "/" + minioConfig.getBucketName() + "/" + uuidFileName;
