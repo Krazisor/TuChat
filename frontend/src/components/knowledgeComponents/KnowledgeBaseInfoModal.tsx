@@ -9,7 +9,8 @@ interface KnowledgeBaseInfoModalProps {
     kbInfo: KnowledgeBaseListResponse | null;
     currentUserRole: RoleEnum;
     onDeleteKb?: (kbId: string) => Promise<void>;
-    onChangeInfo?: (kbId: string, newRole: RoleEnum) => Promise<void>;
+    onChangeOwner?: (kbId: string, newRole: RoleEnum) => Promise<void>;
+    onChangeInfo?: () => Promise<void>;
 }
 
 const roleOptions = [
@@ -24,7 +25,8 @@ const KnowledgeBaseInfoModal: React.FC<KnowledgeBaseInfoModalProps> = ({
     kbInfo,
     currentUserRole,
     onDeleteKb,
-    onChangeInfo,
+    onChangeOwner,
+    onChangeInfo
 }) => {
     const [deleteConfirm, setDeleteConfirm] = useState('');
     const [ownerChangeRole, setOwnerChangeRole] = useState<RoleEnum | 'none'>('editor');

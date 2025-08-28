@@ -1,3 +1,37 @@
 body {
   margin: 0;
 }
+
+/* 自定义 Ant Design 风格的滚动条 - 全局应用 */
+::-webkit-scrollbar {
+    width: 8px; /* 滚动条宽度，符合 Ant Design 风格 */
+    height: 8px; /* 对于水平滚动条的高度 */
+}
+
+::-webkit-scrollbar-track {
+    border-radius: 4px; /* 圆角，与 Ant Design 设计一致 */
+}
+
+::-webkit-scrollbar-thumb {
+    background: #dadada; /* 滑块颜色，中灰色 */
+    border-radius: 4px; /* 圆角 */
+    border: 2px solid transparent; /* 边框留白，使滑块看起来更细 */
+    background-clip: padding-box; /* 确保边框透明区域不影响背景色 */
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a0a0a0; /* 悬停时颜色变深 */
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:active {
+    background: #909090; /* 按下时的颜色，更深一些 */
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+/* Firefox 浏览器滚动条样式（CSS 标准属性） */
+html, body, div, section, article, aside, header, footer {
+    scrollbar-width: thin; /* 滚动条宽度，thin 表示细滚动条 */
+}

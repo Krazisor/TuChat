@@ -1,10 +1,10 @@
-import React, {memo, type RefObject} from 'react';
-import {Avatar, type UploadFile} from 'antd';
-import {Empty} from 'antd';
-import {Bubble} from '@ant-design/x';
-import {Markdown, type MarkdownProps, ThemeProvider} from '@lobehub/ui';
-import {useAppSelector} from "../../stores/StoreHook.ts";
-import {RobotOutlined, UserOutlined, RobotFilled} from "@ant-design/icons";
+import React, { memo, type RefObject } from 'react';
+import { Avatar, type UploadFile } from 'antd';
+import { Empty } from 'antd';
+import { Bubble } from '@ant-design/x';
+import { Markdown, type MarkdownProps, ThemeProvider } from '@lobehub/ui';
+import { useAppSelector } from "../../stores/StoreHook.ts";
+import { RobotOutlined, UserOutlined, RobotFilled } from "@ant-design/icons";
 
 export interface Message {
     id: string;
@@ -12,10 +12,6 @@ export interface Message {
     role: 'user' | 'assistant';
     timestamp: number;
     attachments?: UploadFile[];
-}
-
-interface FileItem extends UploadFile {
-    url: string;
 }
 
 interface ChatMessageListProps {
@@ -26,7 +22,7 @@ interface ChatMessageListProps {
 
 const options: MarkdownProps | any = {
     allowHtml: true,
-    fontSize: 15,
+    fontSize: 14,
     fullFeaturedCodeBlock: true,
     headerMultiple: 1,
     lineHeight: 1.5,
@@ -42,10 +38,10 @@ const colors = {
     lightGreen: '#e8f1e8'
 };
 
-const ChatMessageList: React.FC<ChatMessageListProps> = ({messages, messagesEndRef, activeTopic}) => {
+const ChatMessageList: React.FC<ChatMessageListProps> = ({ messages, messagesEndRef, activeTopic }) => {
     const userInfo = useAppSelector(state => state.user.userInfo)
     return (
-        <div style={{flex: 1, padding: '20px', overflow: 'auto', backgroundColor: '#f8f8f8'}}>
+        <div style={{ flex: 1, padding: '20px', overflow: 'auto', backgroundColor: '#f8f8f8' }}>
             {activeTopic && messages.length >= 0 ? (
                 <>
                     <Bubble.List
@@ -55,7 +51,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({messages, messagesEndR
                             role: message.role,
                             avatar: message.role === 'user' ? (<Avatar
                                 size={32}
-                                icon={<UserOutlined/>}
+                                icon={<UserOutlined />}
                                 src={userInfo?.avatar}
                             />) : (<Avatar
                                 size={32}
@@ -63,7 +59,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({messages, messagesEndR
                                     fontSize: '24px',
                                     color: 'black',
                                     transform: 'rotate(-10deg)'
-                                }}/>}
+                                }} />}
                             />),
                             content: (
                                 <ThemeProvider
@@ -78,7 +74,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({messages, messagesEndR
                                     <Markdown
                                         {...options}
                                         animated={true}
-                                        children={message.content}/>
+                                        children={message.content} />
                                     {/*/!* 附件展示（如果有） *!/*/}
                                     {/*{message.attachments && message.attachments.length > 0 && (*/}
                                     {/*    <div style={{marginTop: '10px'}}>*/}
@@ -108,10 +104,10 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({messages, messagesEndR
                             }
                         }))}
                     />
-                    <div ref={messagesEndRef}/>
+                    <div ref={messagesEndRef} />
                 </>
             ) : (
-                <Empty description="选择一个话题开始对话" style={{top: '40%', position: 'relative'}}/>
+                <Empty description="选择一个话题开始对话" style={{ top: '40%', position: 'relative' }} />
             )}
         </div>
     )

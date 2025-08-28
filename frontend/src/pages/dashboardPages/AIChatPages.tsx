@@ -1,5 +1,5 @@
-import React, {useEffect, useRef, useState} from 'react';
-import {Divider, message, Splitter, Typography} from 'antd';
+import React, { useEffect, useRef, useState } from 'react';
+import { Divider, message, Splitter, Typography } from 'antd';
 import {
     DeleteOutlined,
     EditOutlined,
@@ -14,17 +14,17 @@ import {
     deleteConversation,
     getConversationList, renameConversation, starConversation
 } from "../../api/ConversationApi";
-import {getMessageListByConversationId} from "../../api/MessageApi";
-import {fetchAIResponseStream} from "../../api/FetchStream";
+import { getMessageListByConversationId } from "../../api/MessageApi";
+import { fetchAIResponseStream } from "../../api/FetchStream";
 import dayjs from "dayjs";
 
-import ChatMessageList, {type Message} from '../../components/chatComponents/ChatMessageList';
+import ChatMessageList, { type Message } from '../../components/chatComponents/ChatMessageList';
 import ChatSender from '../../components/chatComponents/ChatSender';
 import TopicSidebar from '../../components/chatComponents/TopicSidebar';
-import type {Attachment} from "@ant-design/x/es/attachments";
+import type { Attachment } from "@ant-design/x/es/attachments";
 import TopicEditModal from "../../components/chatComponents/TopicEditModal.tsx";
 
-const {Title} = Typography;
+const { Title } = Typography;
 
 const AIChatPages: React.FC = () => {
     // --- State 定义 ---
@@ -57,7 +57,7 @@ const AIChatPages: React.FC = () => {
 
     // 滚动到最新
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({behavior: 'smooth'});
+        messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
     }, [messages, activeTopic]);
 
     // --- 会话列表菜单 ---
@@ -66,17 +66,17 @@ const AIChatPages: React.FC = () => {
             {
                 label: '编辑',
                 key: 'edit',
-                icon: <EditOutlined/>,
+                icon: <EditOutlined />,
             },
             {
                 label: '收藏',
                 key: 'mark',
-                icon: <StarFilled/>,
+                icon: <StarFilled />,
             },
             {
                 label: '删除',
                 key: 'delete',
-                icon: <DeleteOutlined/>,
+                icon: <DeleteOutlined />,
                 danger: true,
             },
         ],
@@ -112,7 +112,7 @@ const AIChatPages: React.FC = () => {
                 conversationList!.map(item => ({
                     key: item.conversationId,
                     label: item.title,
-                    icon: item.isMarked ? <StarTwoTone/> : <StarOutlined style={{color: '#bbbbbb'}}/>,
+                    icon: item.isMarked ? <StarTwoTone /> : <StarOutlined style={{ color: '#bbbbbb' }} />,
                     timestamp: Number(item.createTime)
                 }))
             );
@@ -208,7 +208,7 @@ const AIChatPages: React.FC = () => {
             conversationList!.map(item => ({
                 key: item.conversationId,
                 label: item.title,
-                icon: <StarOutlined style={{color: '#bbbbbb'}}/>,
+                icon: <StarOutlined style={{ color: '#bbbbbb' }} />,
                 timestamp: Number(item.createTime)
             }))
         );
@@ -245,16 +245,16 @@ const AIChatPages: React.FC = () => {
     return (
         <>
             <TopicEditModal open={openEditModal} confirmLoading={confirmLoading}
-                            value={newTitleName}
-                            onValueChange={setNewTitleName}
-                            handleOk={() => handleEditModal(newTitleName)}
-                            handleCancel={() => setOpenEditModal(false)}/>
-            <div style={{height: '100%', overflow: 'hidden'}}>
-                <Splitter style={{height: '100%'}}>
+                value={newTitleName}
+                onValueChange={setNewTitleName}
+                handleOk={() => handleEditModal(newTitleName)}
+                handleCancel={() => setOpenEditModal(false)} />
+            <div style={{ height: '100%', overflow: 'hidden' }}>
+                <Splitter style={{ height: '100%' }}>
                     {/* 聊天内容/发送 */}
-                    <Splitter.Panel defaultSize="85%" min="50%" max="85%">
-                        <div style={{height: '100%', display: 'flex', flexDirection: 'column'}}>
-                            <div style={{textAlign: 'center', background: '#f8f8f8'}}>
+                    <Splitter.Panel defaultSize="80%" min="50%" max="85%">
+                        <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                            <div style={{ textAlign: 'center', background: '#f8f8f8' }}>
                                 <Title level={4} style={{
                                     height: '30px', lineHeight: '30px',
                                     margin: 0, padding: '0 8px', display: 'inline-block',
@@ -262,9 +262,9 @@ const AIChatPages: React.FC = () => {
                                     {conversation.find(t => t.key === activeTopic)?.label}
                                 </Title>
                             </div>
-                            <Divider style={{margin: '0', background: '#eeeeee', height: '2px'}}/>
+                            <Divider style={{ margin: '0', background: '#eeeeee', height: '2px' }} />
                             <ChatMessageList messages={messages} messagesEndRef={messagesEndRef}
-                                             activeTopic={activeTopic}/>
+                                activeTopic={activeTopic} />
                             <ChatSender
                                 input={input}
                                 onInputChange={setInput}

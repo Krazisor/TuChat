@@ -1,16 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Modal, Input, List, Checkbox, message, Card, Row, Col, Empty, type UploadProps } from 'antd';
-import { PlusOutlined, DeleteOutlined, EyeOutlined, MoreOutlined, UserOutlined, EditOutlined, InboxOutlined } from '@ant-design/icons';
+import { Modal, message, type UploadProps } from 'antd';
+import { InboxOutlined } from '@ant-design/icons';
 import { addKnowledgeBase, getKnowledgeBaseList, type KnowledgeBaseListResponse, type NewKnowledgeBaseRequest } from '../../api/KnowledgeBaseApi';
 import Dragger from 'antd/es/upload/Dragger';
 import { getFileListByKnowledgeBaseId, uploadFilesToKnowledgeBase, type FileListResponse } from '../../api/FileApi';
 import KnowledgeBaseInfoModal from '../../components/knowledgeComponents/KnowledgeBaseInfoModal';
-
-// const initialFiles: FileListResponse[] = [
-//     { id: 'f1', name: 'API说明.pdf', kbId: '1' },
-//     { id: 'f2', name: '用户手册.docx', kbId: '1' },
-//     { id: 'f3', name: '架构图.png', kbId: '2' },
-// ];
+import KnowledgeBaseList from '../../components/knowledgeComponents/KnowledgeBaseList';
+import NewKBModal from '../../components/knowledgeComponents/NewKBModal';
+import FilePreviewList from '../../components/knowledgeComponents/FileList';
 
 const KnowledgePages: React.FC = () => {
     // 知识库列表
@@ -19,6 +16,8 @@ const KnowledgePages: React.FC = () => {
     const [fileList, setFileList] = useState<FileListResponse[]>([]);
     // 当前选择的知识库Id
     const [selectedKbId, setSelectedKbId] = useState<string>('');
+    // 控制知识库详情弹窗显示
+    const [kbInfoModalVisible, setKbInfoModalVisible] = useState(false);
     // 当前选择的文件Id
     const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
     // 新建知识库弹窗控制开关
@@ -66,6 +65,12 @@ const KnowledgePages: React.FC = () => {
     const handleKbSelect = (id: string) => {
         setSelectedKbId(id);
         setSelectedFiles([]);
+    };
+
+    // 显示知识库详情弹窗
+    const handleShowKbInfo = (id: string) => {
+        setSelectedKbId(id);
+        setKbInfoModalVisible(true);
     };
 
     const handleFileCheck = (id: string, checked: boolean) => {
@@ -144,201 +149,72 @@ const KnowledgePages: React.FC = () => {
         },
     };
 
-    const filesOfSelectedKb = fileList.filter(f => f.knowledgeBaseId === selectedKbId);
-
     return (
         <div style={{ display: 'flex', height: '100%' }}>
             {/* 左侧知识库列表 */}
-            <div style={{ width: 300, borderRight: '1px solid #eee', padding: 24, background: '#fafbfc' }}>
-                <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontWeight: 500, fontSize: 18 }}>知识库</span>
-                    <Button type="primary" icon={<PlusOutlined />} onClick={() => setKbModalVisible(true)}>
-                        新建
-                    </Button>
-                </div>
-                <Row gutter={[16, 16]}>
-                    {kbList.length > 0 ?
-                        (kbList.map(kb => (
-                            <Col key={kb.knowledgeBaseId} span={24}>
-                                <Card
-                                    hoverable
-                                    onClick={() => handleKbSelect(kb.knowledgeBaseId)}
-                                    style={{
-                                        borderRadius: 12,
-                                        boxShadow: kb.knowledgeBaseId === selectedKbId ? '0 0 0 2px #1677ff' : '0 1px 4px #eee',
-                                        background: kb.knowledgeBaseId === selectedKbId ? '#e6f7ff' : '#fff',
-                                        cursor: 'pointer',
-                                        transition: 'box-shadow 0.2s',
-                                        position: 'relative',
-                                    }}
-                                >
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <span style={{ fontWeight: 500, fontSize: 16 }}>{kb.name}</span>
-                                        <Button
-                                            type="text"
-                                            icon={<MoreOutlined style={{ fontSize: 18 }} />}
-                                            style={{ padding: 0 }}
-                                            onClick={e => {
-                                                e.stopPropagation();
-                                                // 这里可以添加弹出菜单等逻辑
-                                            }}
-                                        />
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', marginTop: 8 }}>
-                                        {/* 身份图标 */}
-                                        {kb.role === 'owner' && (
-                                            <UserOutlined style={{ color: '#1677ff', marginRight: 8 }} title="拥有者" />
-                                        )}
-                                        {kb.role === 'editor' && (
-                                            <EditOutlined style={{ color: '#52c41a', marginRight: 8 }} title="编辑者" />
-                                        )}
-                                        {kb.role === 'viewer' && (
-                                            <EyeOutlined style={{ color: '#faad14', marginRight: 8 }} title="只读者" />
-                                        )}
-                                        {/* 描述省略显示，鼠标悬停显示全部 */}
-                                        <span
-                                            style={{
-                                                fontSize: 13,
-                                                color: '#888',
-                                                WebkitLineClamp: 2, // 限制显示两行
-                                                WebkitBoxOrient: 'vertical',
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                maxWidth: 180,
-                                                cursor: kb.description ? 'pointer' : 'default',
-                                                lineHeight: '20px',
-                                                height: (kb.description && kb.description.length <= 13) || !kb.description ? '20px' : '40px',
-                                                alignItems: kb.description && kb.description.length <= 13 ? 'center' : 'normal',
-                                                display: kb.description && kb.description.length <= 13 ? 'flex' : '-webkit-box',
-                                                justifyContent: kb.description && kb.description.length <= 13 ? 'center' : 'normal',
-                                            }}
-                                            title={kb.description || ''}
-                                        >
-                                            {kb.description || '无描述'}
-                                        </span>
-                                    </div>
-                                </Card>
-                            </Col>
-                        ))) :
-                        (<Col span={24}
-                            style={{
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                height: '220px', // 设置高度保证垂直居中
-                                minHeight: 220,
-                            }} >
-                            <Empty description="暂无知识库" />
-                        </Col>)}
-                </Row>
-            </div>
+            <KnowledgeBaseList
+                kbList={kbList}
+                selectedKbId={selectedKbId}
+                setKbModalVisible={setKbModalVisible}
+                handleKbSelect={handleKbSelect}
+                handleShowKbInfo={handleShowKbInfo}
+            ></KnowledgeBaseList>
             {/* 右侧文件格子列表 */}
-            <div style={{ flex: 1, padding: 24, background: '#f9f9f9' }}>
-                <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
-                    <div>
-                        <Button
-                            type="primary"
-                            icon={<PlusOutlined />}
-                            onClick={() => setFileModalVisible(true)}
-                            style={{ marginRight: 8 }}
-                            disabled={!selectedKbId}
-                        >
-                            新建文件
-                        </Button>
-                        <Button
-                            danger
-                            icon={<DeleteOutlined />}
-                            onClick={handleBatchDelete}
-                            disabled={selectedFiles.length === 0 || !selectedKbId}
-                        >
-                            批量删除
-                        </Button>
-                    </div>
-                    <span style={{ fontWeight: 500 }}>
-                        {kbList.find(kb => kb.knowledgeBaseId === selectedKbId)?.name || ''}
-                    </span>
+            <FilePreviewList
+                files={fileList}
+                selectedKbId={selectedKbId}
+                selectedFiles={selectedFiles}
+                onFileCheck={handleFileCheck}
+                onFilePreview={(file) => setPreviewFile(file)}
+                setFileModalVisible={setFileModalVisible}
+                handleBatchDelete={handleBatchDelete}
+            ></FilePreviewList>
+            {/* 预览文件弹窗 */}
+            <Modal
+                open={!!previewFile}
+                title="文件预览"
+                footer={null}
+                onCancel={() => setPreviewFile(null)}
+            >
+                <div>
+                    <strong>文件名：</strong> {previewFile?.fileName}
+                    <div style={{ marginTop: 16, color: '#888' }}>（此处可集成文件预览组件）</div>
                 </div>
-                <Row gutter={[16, 16]}>
-                    {filesOfSelectedKb.map(file => (
-                        <Col key={file.fileId} xs={24} sm={12} md={8} lg={6}>
-                            <Card
-                                hoverable
-                                actions={[
-                                    <EyeOutlined key="preview" onClick={() => setPreviewFile(file)} />,
-                                    <Checkbox
-                                        checked={selectedFiles.includes(file.fileId)}
-                                        onChange={e => handleFileCheck(file.fileId, e.target.checked)}
-                                    />,
-                                ]}
-                                style={{ borderRadius: 8 }}
-                            >
-                                <Card.Meta title={file.fileName} />
-                            </Card>
-                        </Col>
-                    ))}
-                </Row>
-                {/* 预览文件弹窗 */}
-                <Modal
-                    open={!!previewFile}
-                    title="文件预览"
-                    footer={null}
-                    onCancel={() => setPreviewFile(null)}
-                >
-                    <div>
-                        <strong>文件名：</strong> {previewFile?.fileName}
-                        <div style={{ marginTop: 16, color: '#888' }}>（此处可集成文件预览组件）</div>
-                    </div>
-                </Modal>
-                {/* 新建知识库弹窗 */}
-                <Modal
-                    open={kbModalVisible}
-                    title="新建知识库"
-                    onOk={() => handleAddKb()}
-                    onCancel={() => setKbModalVisible(false)}
-                >
-                    <div style={{ marginBottom: 8, fontWeight: 500 }}>知识库名称</div>
-                    <Input
-                        placeholder="输入知识库名称"
-                        value={newKbName}
-                        onChange={e => setNewKbName(e.target.value)}
-                        maxLength={20}
-                    />
-                    <div style={{ height: 16 }} /> {/* 空一行 */}
-                    <div style={{ marginBottom: 8, fontWeight: 500 }}>知识库描述</div>
-                    <Input.TextArea
-                        placeholder="输入知识库描述（可选）"
-                        value={newKbDescription || ''}
-                        onChange={e => setNewKbDescription(e.target.value)}
-                        rows={3}
-                        maxLength={100}
-                        style={{ resize: 'none' }}
-                    />
-                </Modal>
-                {/* 新建文件弹窗 */}
-                <Modal
-                    open={fileModalVisible}
-                    title="新建文件"
-                    onOk={handleAddFile}
-                    onCancel={() => setFileModalVisible(false)}
-                >
-                    <Dragger {...props}>
-                        <p className="ant-upload-drag-icon">
-                            <InboxOutlined />
-                        </p>
-                        <p className="ant-upload-text">点击或拖拽文件到此区域上传</p>
-                        <p className="ant-upload-hint">
-                            仅支持上传md文件
-                        </p>
-                    </Dragger>
-                </Modal>
-            </div>
+            </Modal>
+            {/* 新建知识库弹窗 */}
+            <NewKBModal
+                visible={kbModalVisible}
+                onOk={handleAddKb}
+                onCancel={() => setKbModalVisible(false)}
+                newKbName={newKbName}
+                setNewKbName={setNewKbName}
+                newKbDescription={newKbDescription}
+                setNewKbDescription={setNewKbDescription}
+            />
+            {/* 新建文件弹窗 */}
+            <Modal
+                open={fileModalVisible}
+                title="新建文件"
+                onOk={handleAddFile}
+                onCancel={() => setFileModalVisible(false)}
+            >
+                <Dragger {...props}>
+                    <p className="ant-upload-drag-icon">
+                        <InboxOutlined />
+                    </p>
+                    <p className="ant-upload-text">点击或拖拽文件到此区域上传</p>
+                    <p className="ant-upload-hint">
+                        仅支持上传md文件
+                    </p>
+                </Dragger>
+            </Modal>
             <KnowledgeBaseInfoModal
-                open={!!selectedKbId}
-                onClose={() => setSelectedKbId(null)}
+                open={kbInfoModalVisible}
+                onClose={() => setKbInfoModalVisible(false)}
                 kbInfo={kbList.find(kb => kb.knowledgeBaseId === selectedKbId) || null}
                 currentUserRole={kbList.find(kb => kb.knowledgeBaseId === selectedKbId)?.role || null}
-                // onConfigEditor={() => { }}
-                // onConfigViewer={() => { }}
+            // onConfigEditor={() => { }}
+            // onConfigViewer={() => { }}
             // onDeleteKb={() => {}}
             // onChangeOwner={handleChangeOwner}
             />
