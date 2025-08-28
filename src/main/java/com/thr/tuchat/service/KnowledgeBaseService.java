@@ -15,4 +15,9 @@ public interface KnowledgeBaseService extends IService<KnowledgeBase> {
 
     @Transactional(rollbackFor = Exception.class)
     Boolean deleteKnowledgeBaseWithFile(String knowledgeBaseId);
+
+    @Transactional(rollbackFor = Exception.class)
+    Boolean updateKnowledgeBaseInfo(
+            String knowledgeBaseId, String name, String description,
+            List<String> editorList, List<String> viewList);
 }

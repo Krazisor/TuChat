@@ -15,7 +15,7 @@ interface KnowledgeBaseInfoModalProps {
 
 const roleOptions = [
     { label: <><EditOutlined style={{ color: '#52c41a' }} /> 编辑者</>, value: 'editor' },
-    { label: <><EyeOutlined style={{ color: '#faad14' }} /> 只读者</>, value: 'viewer' },
+    { label: <><EyeOutlined style={{ color: '#faad14' }} /> 只读者</>, value: 'VIEWER' },
     { label: <><CloseCircleOutlined style={{ color: '#888' }} /> 无权限</>, value: 'none' },
 ];
 

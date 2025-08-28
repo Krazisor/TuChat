@@ -2,7 +2,9 @@ package com.thr.tuchat.service.impl;
 
 import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.thr.tuchat.constant.ChangeTypeEnum;
 import com.thr.tuchat.constant.RoleEnum;
 import com.thr.tuchat.exception.BusinessException;
 import com.thr.tuchat.exception.ResultCode;
@@ -14,16 +16,17 @@ import com.thr.tuchat.model.entity.KnowledgeBase;
 import com.thr.tuchat.model.entity.KnowledgeBaseMember;
 import com.thr.tuchat.service.FileService;
 import com.thr.tuchat.service.KnowledgeBaseService;
-import com.thr.tuchat.util.RedisDistributedLock;
-import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.annotation.Resource;
 import java.sql.Timestamp;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -38,7 +41,7 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeBaseMapper, K
     private KnowledgeBaseMemberMapper knowledgeBaseMemberMapper;
 
     @Resource
-    private RedisDistributedLock redisDistributedLock;
+    private RedissonClient redissonClient;
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
@@ -46,70 +49,55 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeBaseMapper, K
     @Resource
     private FileService fileService;
 
-    /*
-     * 我们希望数据库不是同名的
-     * 数据库唯一约束确实可以保证数据最终一致性，防止重复插入。但分布式锁的意义在于优化并发场景下的用户体验和系统性能，具体体现在：
-        （1）减少数据库冲突和异常
-        如果没有分布式锁，多个并发请求会同时尝试插入同名数据，数据库会抛出唯一约束异常（如 DuplicateKeyException）。
-        频繁的异常会导致数据库压力增大，影响性能，甚至可能导致事务回滚、锁表等问题。
-        （2）提升用户体验
-        有分布式锁时，只有一个请求会真正走到插入逻辑，其他请求会被提前拦截（拿不到锁），可以直接返回“已存在”或“操作失败”，而不是等数据库报错。
-        这样用户不会遇到“系统异常”或“插入失败”的提示，而是明确的业务提示。
-        （3）减少无效操作和资源浪费
-        没有分布式锁时，所有并发请求都要查库、尝试插入，最后只有一个成功，其他都失败，造成大量无效数据库写操作。
-        有分布式锁时，只有一个请求会执行插入，其他请求直接返回，减少数据库压力。
-        （4）业务流程可控
-        某些业务场景下，插入前后还有其他操作（比如发通知、写日志等），如果依赖数据库唯一约束，异常处理流程会变复杂。
-        分布式锁可以让业务流程更清晰，只有拿到锁的请求才会走完整流程。
-     */
+    private static final long LOCK_WAIT_TIMEOUT_SECONDS = 5;
+    private static final long LOCK_LEASE_TIMEOUT_SECONDS = 30;
+    private static final long CACHE_EXPIRY_MINUTES = 10;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String addNewKnowledgeBase(String name, String description, String ownerId) {
-        ThrowUtils.throwIf(name == null || ownerId == null, ResultCode.PARAMS_ERROR,
-                "name或ownerId为空");
+        ThrowUtils.throwIf(name == null || ownerId == null, ResultCode.PARAMS_ERROR, "name或ownerId为空");
         ThrowUtils.throwIf(name.length() > 10, ResultCode.PARAMS_ERROR, "name长度不得大于10");
-        String redisKeyForAdd = "knowledgeBase:add:" + name;
-        String lockValue = redisDistributedLock.tryLock(redisKeyForAdd, 30);
-        ThrowUtils.throwIf(lockValue == null, ResultCode.PARAMS_ERROR,
-                "当前知识库name正在被创建，请稍后重试");
-        try {
-            // 1. 检查name是否可用，redis预查
-            String redisKey = "knowledgeBase:name:" + name;
-            if (stringRedisTemplate.hasKey(redisKey)) {
-                throw new BusinessException(ResultCode.PARAMS_ERROR, "当前知识库name已存在[缓存]");
-            }
-            LambdaQueryWrapper<KnowledgeBase> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.eq(KnowledgeBase::getName, name);
-            boolean exists = knowledgeBaseMapper.selectCount(queryWrapper) > 0;
-            if (exists) {
-                stringRedisTemplate.opsForValue().set(redisKey, "1", 5, TimeUnit.MINUTES);
-                throw new BusinessException(ResultCode.PARAMS_ERROR, "当前知识库name已存在");
-            }
 
-            // 2. 插入知识库（插入数据库生成ID和createTime等）
+        String redisKeyForAdd = "knowledgeBase:add:" + name;
+        String redisKey = "knowledgeBase:name:" + name;
+
+        // 使用 Redisson 获取分布式锁
+        RLock lock = redissonClient.getLock(redisKeyForAdd);
+        try {
+            boolean locked = lock.tryLock(LOCK_WAIT_TIMEOUT_SECONDS, LOCK_LEASE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            ThrowUtils.throwIf(!locked, ResultCode.PARAMS_ERROR, "当前知识库name正在被创建，请稍后重试");
+            // 检查名称是否重复
+            ThrowUtils.throwIf(!checkRepeatKnowledgeBaseName(name), ResultCode.PARAMS_ERROR, "当前知识库name已存在");
+            // 插入知识库
             KnowledgeBase newKnowledgeBase = new KnowledgeBase();
             newKnowledgeBase.setName(name);
             newKnowledgeBase.setDescription(description);
             newKnowledgeBase.setOwnerId(ownerId);
             newKnowledgeBase.setCreateTime(new Timestamp(System.currentTimeMillis()));
             knowledgeBaseMapper.insert(newKnowledgeBase);
-
-            // 3. 插入成员权限行
+            // 插入成员权限
             KnowledgeBaseMember knowledgeBaseMember = new KnowledgeBaseMember();
-            knowledgeBaseMember.setKnowledgeBaseId(newKnowledgeBase.getKnowledgeBaseId()); // 注意是知识库ID
+            knowledgeBaseMember.setKnowledgeBaseId(newKnowledgeBase.getKnowledgeBaseId());
             knowledgeBaseMember.setUserId(ownerId);
-            knowledgeBaseMember.setRole(RoleEnum.owner);
+            knowledgeBaseMember.setRole(RoleEnum.OWNER);
             knowledgeBaseMember.setJoinTime(newKnowledgeBase.getCreateTime());
             knowledgeBaseMemberMapper.insert(knowledgeBaseMember);
-
-            // 4. 所有写库成功再写缓存
-            stringRedisTemplate.opsForValue().set(redisKey, "1");
+            // 更新缓存
+            stringRedisTemplate.opsForValue().set(redisKey, "1", CACHE_EXPIRY_MINUTES, TimeUnit.MINUTES);
             return newKnowledgeBase.getKnowledgeBaseId();
+        } catch (InterruptedException e) {
+            log.error("获取锁时线程被中断, name: {}", name, e);
+            throw new BusinessException(ResultCode.SYSTEM_ERROR, "系统繁忙，请稍后重试");
         } catch (DuplicateKeyException e) {
             throw new BusinessException(ResultCode.PARAMS_ERROR, "已经存在同名的知识库");
+        } catch (Exception e) {
+            log.error("创建知识库失败, name: {}", name, e);
+            throw new BusinessException(ResultCode.SYSTEM_ERROR, "创建知识库失败");
         } finally {
-            if (!redisDistributedLock.unlock(redisKeyForAdd, lockValue)) {
-                log.warn("分布式锁没有被正常释放: {}", redisKeyForAdd);
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
+                log.debug("分布式锁(新增知识库)释放成功, key: {}", redisKeyForAdd);
             }
         }
     }
@@ -120,50 +108,252 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeBaseMapper, K
         return knowledgeBaseMapper.selectKnowledgeBaseListByUser(ownerId);
     }
 
-    public Boolean updateBasicKnowledgeBaseInfo () {
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean deleteKnowledgeBaseWithFile(String knowledgeBaseId) {
+        // 验证权限：当前用户是否为知识库拥有者
+        LambdaQueryWrapper<KnowledgeBase> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(KnowledgeBase::getKnowledgeBaseId, knowledgeBaseId);
+        KnowledgeBase knowledgeBase = knowledgeBaseMapper.selectOne(queryWrapper);
+        String userId = StpUtil.getLoginIdAsString();
+        ThrowUtils.throwIf(knowledgeBase == null, ResultCode.NOT_FOUND_ERROR, "知识库不存在");
+        ThrowUtils.throwIf(!userId.equals(knowledgeBase.getOwnerId()), ResultCode.NO_AUTH_ERROR, "用户无权限删除该知识库");
+
+        String redisKeyForDelete = "knowledgeBase:delete:" + knowledgeBaseId;
+
+        // 使用 Redisson 获取分布式锁
+        RLock lock = redissonClient.getLock(redisKeyForDelete);
+        try {
+            boolean locked = lock.tryLock(LOCK_WAIT_TIMEOUT_SECONDS, LOCK_LEASE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            ThrowUtils.throwIf(!locked, ResultCode.PARAMS_ERROR, "当前知识库正在被删除，请不要重复提交请求");
+            // 删除关联文件
+            List<String> fileIds = fileService.getFileIdsByKnowledgeBaseId(knowledgeBaseId);
+            if (!fileIds.isEmpty()) {
+                fileService.removeByIds(fileIds);
+            }
+            // 删除权限记录
+            LambdaQueryWrapper<KnowledgeBaseMember> memberQueryWrapper = new LambdaQueryWrapper<>();
+            memberQueryWrapper.eq(KnowledgeBaseMember::getKnowledgeBaseId, knowledgeBaseId);
+            List<KnowledgeBaseMember> members = knowledgeBaseMemberMapper.selectList(memberQueryWrapper);
+            if (!members.isEmpty()) {
+                List<Long> memberIds = members.stream().map(KnowledgeBaseMember::getId).collect(Collectors.toList());
+                knowledgeBaseMemberMapper.deleteByIds(memberIds);
+            }
+            // 删除知识库本身
+            knowledgeBaseMapper.deleteById(knowledgeBaseId);
+            // 清理缓存
+            String redisKey = "knowledgeBase:name:" + knowledgeBase.getName();
+            stringRedisTemplate.delete(redisKey);
+            return true;
+        } catch (InterruptedException e) {
+            log.error("获取锁时线程被中断, knowledgeBaseId: {}", knowledgeBaseId, e);
+            throw new BusinessException(ResultCode.SYSTEM_ERROR, "系统繁忙，请稍后重试");
+        } catch (Exception e) {
+            log.error("删除知识库失败, knowledgeBaseId: {}", knowledgeBaseId, e);
+            throw new BusinessException(ResultCode.SYSTEM_ERROR, "删除知识库失败");
+        } finally {
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
+                log.debug("分布式锁(删除知识库)释放成功, key: {}", redisKeyForDelete);
+            }
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateKnowledgeBaseInfo(
+            String knowledgeBaseId, String name, String description,
+            List<String> editorList, List<String> viewList) {
+        String redisKeyForUpdate = "knowledgeBase:update:" + knowledgeBaseId;
+
+        // 使用 Redisson 获取分布式锁
+        RLock lock = redissonClient.getLock(redisKeyForUpdate);
+        try {
+            boolean locked = lock.tryLock(LOCK_WAIT_TIMEOUT_SECONDS, LOCK_LEASE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            ThrowUtils.throwIf(!locked, ResultCode.PARAMS_ERROR, "当前知识库正在被修改，请不要重复提交请求");
+            // 获取当前知识库信息
+            KnowledgeBase knowledgeBaseInfo = knowledgeBaseMapper.selectById(knowledgeBaseId);
+            ThrowUtils.throwIf(knowledgeBaseInfo == null, ResultCode.NOT_FOUND_ERROR, "知识库不存在");
+            // 更新基本信息
+            boolean updated = this.updateBasicInfo(knowledgeBaseId, name, description);
+            ThrowUtils.throwIf(!updated, ResultCode.SYSTEM_ERROR, "更新知识库基本信息失败");
+            // 更新成员权限
+            this.updateMembers(knowledgeBaseId, editorList, viewList);
+            // 清理缓存
+            String redisKey = "knowledgeBase:name:" + knowledgeBaseInfo.getName();
+            stringRedisTemplate.delete(redisKey);
+            // 新增缓存
+            if (!name.equals(knowledgeBaseInfo.getName())) {
+                String newRedisKey = "knowledgeBase:name:" + name;
+                stringRedisTemplate.opsForValue().set(newRedisKey, "1", CACHE_EXPIRY_MINUTES, TimeUnit.MINUTES);
+            }
+            return true;
+        } catch (InterruptedException e) {
+            log.error("获取锁时线程被中断, knowledgeBaseId: {}", knowledgeBaseId, e);
+            throw new BusinessException(ResultCode.SYSTEM_ERROR, "系统繁忙，请稍后重试");
+        } catch (Exception e) {
+            log.error("更新知识库失败, knowledgeBaseId: {}", knowledgeBaseId, e);
+            throw new BusinessException(ResultCode.SYSTEM_ERROR, "更新知识库失败");
+        } finally {
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
+                log.debug("分布式锁(更新知识库)释放成功, key: {}", redisKeyForUpdate);
+            }
+        }
+    }
+
+    /**
+     * 检查知识库名称是否重复
+     * @param name 知识库名称
+     * @return 是否可用，true 表示名称可用，false 表示名称已存在
+     */
+    private boolean checkRepeatKnowledgeBaseName(String name) {
+        ThrowUtils.throwIf(name == null || name.trim().isEmpty(), ResultCode.PARAMS_ERROR, "知识库名称不能为空");
+        String redisKey = "knowledgeBase:name:" + name;
+        if (stringRedisTemplate.hasKey(redisKey)) {
+            log.info("从 Redis 缓存检测到知识库名称已存在: {}", name);
+            return false;
+        }
+        LambdaQueryWrapper<KnowledgeBase> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(KnowledgeBase::getName, name);
+        long count = knowledgeBaseMapper.selectCount(queryWrapper);
+        if (count > 0) {
+            stringRedisTemplate.opsForValue().set(redisKey, "1", CACHE_EXPIRY_MINUTES, TimeUnit.MINUTES);
+            log.info("从数据库检测到知识库名称已存在: {}", name);
+            return false;
+        }
+        log.info("知识库名称可用: {}", name);
         return true;
     }
 
     /**
-     * WARN!!!: 删除知识库意味着删除所有关联文件和权限记录
-     * 使用分布式锁，防止反复重复点击导致报错等影响用户体验的事情
-     * 涉及多表删除，如果不加锁可能因为回滚等问题造成脏数据
-     * @param knowledgeBaseId 知识库Id
-     * @return 是否删除成功
+     * 知识库基本信息更新
+     * @param knowledgeBaseId 知识库ID
+     * @param name 知识库名称
+     * @param description 知识库描述
+     * @return 更新是否成功
      */
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public Boolean deleteKnowledgeBaseWithFile(String knowledgeBaseId) {
-        // 判断你是不是知识库的主人
-        LambdaQueryWrapper<KnowledgeBase> queryWrapperFirst = new LambdaQueryWrapper<KnowledgeBase>()
-                .eq(KnowledgeBase::getKnowledgeBaseId, knowledgeBaseId);
-        KnowledgeBase knowledgeBase = knowledgeBaseMapper.selectOne(queryWrapperFirst);
-        String userId = StpUtil.getLoginIdAsString();
-        ThrowUtils.throwIf(!userId.equals(knowledgeBase.getOwnerId()), ResultCode.NO_AUTH_ERROR,
-                "用户企图删除不属于自己的知识库");
-        // 上分布式锁
-        String redisKeyForDelete = "knowledgeBase:delete:" + knowledgeBaseId;
-        String lockValue = redisDistributedLock.tryLock(redisKeyForDelete, 30);
-        ThrowUtils.throwIf(lockValue == null, ResultCode.PARAMS_ERROR,
-                "当前知识库name正在被删除，请不要重复提交请求");
-        try {
-            // 首先进行删除的是知识库中文件
-            List<String> fileIds = fileService.getFileIdsByKnowledgeBaseId(knowledgeBaseId);
-            fileService.removeByIds(fileIds);
-            // 然后删除的是知识库权限关联表
-            LambdaQueryWrapper<KnowledgeBaseMember> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.select(KnowledgeBaseMember::getId);
-            queryWrapper.eq(KnowledgeBaseMember::getKnowledgeBaseId, knowledgeBaseId);
-            List<String> memberIds = knowledgeBaseMemberMapper.selectList(queryWrapper)
-                    .stream().map(KnowledgeBaseMember::getUserId).collect(Collectors.toList());
-            knowledgeBaseMemberMapper.deleteByIds(memberIds);
-            // 最后删除数据库本身
-            knowledgeBaseMapper.deleteById(knowledgeBaseId);
-            return true;
-        } finally {
-            // 任务完成，释放分布式锁
-            redisDistributedLock.unlock(redisKeyForDelete, lockValue);
+    private boolean updateBasicInfo(String knowledgeBaseId, String name, String description) {
+        LambdaUpdateWrapper<KnowledgeBase> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(KnowledgeBase::getKnowledgeBaseId, knowledgeBaseId)
+                .set(KnowledgeBase::getName, name)
+                .set(KnowledgeBase::getDescription, description);
+        return knowledgeBaseMapper.update(updateWrapper) > 0;
+    }
+
+    /**
+     * 知识库角色名单更新
+     * @param knowledgeBaseId 知识库ID
+     * @param editorList 新的编辑者名单
+     * @param viewList 新的浏览者名单
+     */
+    private void updateMembers(String knowledgeBaseId, List<String> editorList, List<String> viewList) {
+        Map<RoleEnum, List<String>> roleListMap = getCurrentMembersGroupedByRole(knowledgeBaseId);
+        Map<ChangeTypeEnum, List<String>> editorChangeMap = computeUserListChanges(editorList, roleListMap.get(RoleEnum.EDITOR));
+        Map<ChangeTypeEnum, List<String>> viewerChangeMap = computeUserListChanges(viewList, roleListMap.get(RoleEnum.VIEWER));
+        // 处理添加用户
+        List<KnowledgeBaseMember> adders = createMembersFromChanges(knowledgeBaseId, editorChangeMap.get(ChangeTypeEnum.ADDERS), RoleEnum.EDITOR);
+        adders.addAll(createMembersFromChanges(knowledgeBaseId, viewerChangeMap.get(ChangeTypeEnum.ADDERS), RoleEnum.VIEWER));
+        if (!adders.isEmpty()) {
+            knowledgeBaseMemberMapper.insert(adders);
+        }
+        // 处理移除用户
+        List<String> removers = new ArrayList<>(editorChangeMap.get(ChangeTypeEnum.REMOVERS));
+        removers.addAll(viewerChangeMap.get(ChangeTypeEnum.REMOVERS));
+        if (!removers.isEmpty()) {
+            LambdaQueryWrapper<KnowledgeBaseMember> removeQuery = new LambdaQueryWrapper<>();
+            removeQuery.eq(KnowledgeBaseMember::getKnowledgeBaseId, knowledgeBaseId)
+                    .in(KnowledgeBaseMember::getUserId, removers);
+            List<KnowledgeBaseMember> toRemove = knowledgeBaseMemberMapper.selectList(removeQuery);
+            if (!toRemove.isEmpty()) {
+                List<Long> removeIds = toRemove.stream().map(KnowledgeBaseMember::getId).collect(Collectors.toList());
+                knowledgeBaseMemberMapper.deleteBatchIds(removeIds);
+            }
         }
     }
 
+    /**
+     * 查询知识库ID中所有成员，按照身份区分
+     * @param knowledgeBaseId 知识库ID
+     * @return 以 RoleEnum 为键的成员ID清单
+     */
+    private Map<RoleEnum, List<String>> getCurrentMembersGroupedByRole(String knowledgeBaseId) {
+        LambdaQueryWrapper<KnowledgeBaseMember> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(KnowledgeBaseMember::getKnowledgeBaseId, knowledgeBaseId)
+                .select(KnowledgeBaseMember::getUserId, KnowledgeBaseMember::getRole);
+        List<KnowledgeBaseMember> members = knowledgeBaseMemberMapper.selectList(queryWrapper);
+        return filterAndGroupByRole(members);
+    }
+
+    /**
+     * 构造 KnowledgeBaseMember 列表
+     * @param knowledgeBaseId 知识库ID
+     * @param userIds 用户ID列表
+     * @param role 身份
+     * @return KnowledgeBaseMember 列表
+     */
+    private List<KnowledgeBaseMember> createMembersFromChanges(String knowledgeBaseId, List<String> userIds, RoleEnum role) {
+        return userIds.stream()
+                .map(userId -> {
+                    KnowledgeBaseMember member = new KnowledgeBaseMember();
+                    member.setKnowledgeBaseId(knowledgeBaseId);
+                    member.setUserId(userId);
+                    member.setRole(role);
+                    member.setJoinTime(new Timestamp(System.currentTimeMillis()));
+                    return member;
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 按角色分组成员
+     * @param members 某个知识库所有的成员清单
+     * @return 以 RoleEnum 为键的成员ID清单
+     */
+    private Map<RoleEnum, List<String>> filterAndGroupByRole(List<KnowledgeBaseMember> members) {
+        Map<RoleEnum, List<String>> groupedMembers = new EnumMap<>(RoleEnum.class);
+        List<String> editors = new ArrayList<>();
+        List<String> viewers = new ArrayList<>();
+        members.forEach(member -> {
+            RoleEnum role = member.getRole();
+            if (role == RoleEnum.EDITOR) {
+                editors.add(member.getUserId());
+            } else if (role == RoleEnum.VIEWER) {
+                viewers.add(member.getUserId());
+            }
+        });
+        groupedMembers.put(RoleEnum.EDITOR, editors);
+        groupedMembers.put(RoleEnum.VIEWER, viewers);
+        return groupedMembers;
+    }
+
+    /**
+     * 计算用户列表的变化，区分需要添加和移除的用户
+     * @param newUserList 新用户列表
+     * @param existingUserList 老用户列表
+     * @return 以 ChangeTypeEnum 为键，包含待删除和新增 userId 列表的 Map
+     */
+    private Map<ChangeTypeEnum, List<String>> computeUserListChanges(List<String> newUserList, List<String> existingUserList) {
+        boolean isNewEmpty = newUserList == null || newUserList.isEmpty();
+        boolean isExistingEmpty = existingUserList == null || existingUserList.isEmpty();
+        if (isNewEmpty && isExistingEmpty) {
+            return Map.of(ChangeTypeEnum.ADDERS, List.of(), ChangeTypeEnum.REMOVERS, List.of());
+        }
+        if (isNewEmpty) {
+            return Map.of(ChangeTypeEnum.ADDERS, List.of(), ChangeTypeEnum.REMOVERS, List.copyOf(existingUserList));
+        }
+        if (isExistingEmpty) {
+            return Map.of(ChangeTypeEnum.ADDERS, List.copyOf(newUserList), ChangeTypeEnum.REMOVERS, List.of());
+        }
+        Set<String> newSet = new HashSet<>(newUserList);
+        Set<String> existingSet = new HashSet<>(existingUserList);
+        List<String> adders = new ArrayList<>(newSet);
+        adders.removeAll(existingSet);
+        List<String> removers = new ArrayList<>(existingSet);
+        removers.removeAll(newSet);
+        Map<ChangeTypeEnum, List<String>> changes = new EnumMap<>(ChangeTypeEnum.class);
+        changes.put(ChangeTypeEnum.ADDERS, Collections.unmodifiableList(adders));
+        changes.put(ChangeTypeEnum.REMOVERS, Collections.unmodifiableList(removers));
+        return changes;
+    }
 }

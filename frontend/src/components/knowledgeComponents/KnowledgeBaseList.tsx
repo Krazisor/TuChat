@@ -62,7 +62,7 @@ const KnowledgeBaseList: React.FC<KnowledgeBaseListProps> = ({ kbList, selectedK
                                     {kb.role === 'editor' && (
                                         <EditOutlined style={{ color: '#52c41a', marginRight: 8 }} title="编辑者" />
                                     )}
-                                    {kb.role === 'viewer' && (
+                                    {kb.role === 'VIEWER' && (
                                         <EyeOutlined style={{ color: '#faad14', marginRight: 8 }} title="只读者" />
                                     )}
                                     <span

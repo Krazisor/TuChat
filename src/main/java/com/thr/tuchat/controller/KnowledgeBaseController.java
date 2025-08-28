@@ -6,6 +6,7 @@ import com.thr.tuchat.common.ResponseResult;
 import com.thr.tuchat.exception.ResultCode;
 import com.thr.tuchat.exception.ThrowUtils;
 import com.thr.tuchat.model.dto.KnowledgeBaseListResponse;
+import com.thr.tuchat.model.dto.KnowledgeUpdateRequest;
 import com.thr.tuchat.model.dto.NewKnowledgeBaseRequest;
 import com.thr.tuchat.service.KnowledgeBaseService;
 import jakarta.annotation.Resource;
@@ -51,5 +52,20 @@ public class KnowledgeBaseController {
         log.info("用户:{}, 正在删除知识库: {}", userId, knowledgeBaseId);
         Boolean ans = knowledgeBaseService.deleteKnowledgeBaseWithFile(knowledgeBaseId);
         return ResponseResult.success(ans);
+    }
+
+    @PostMapping("/update")
+    public ResponseResult<Boolean> updateKnowledgeBase (@RequestBody KnowledgeUpdateRequest knowledgeUpdateRequest) {
+        String userId = StpUtil.getLoginIdAsString();
+        ThrowUtils.throwIf(userId == null, ResultCode.NOT_LOGIN_ERROR, "用户未登录");
+        log.info("用户：{}，正在更新知识库信息：{}", userId, knowledgeUpdateRequest);
+        ThrowUtils.throwIf(knowledgeUpdateRequest.knowledgeBaseId() == null, ResultCode.NOT_LOGIN_ERROR, "");
+        Boolean success = knowledgeBaseService.updateKnowledgeBaseInfo(
+                knowledgeUpdateRequest.knowledgeBaseId(),
+                knowledgeUpdateRequest.name(),
+                knowledgeUpdateRequest.description(),
+                knowledgeUpdateRequest.editorList(),
+                knowledgeUpdateRequest.viewerList());
+        return ResponseResult.success(success);
     }
 }
