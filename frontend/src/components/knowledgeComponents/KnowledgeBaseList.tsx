@@ -56,10 +56,10 @@ const KnowledgeBaseList: React.FC<KnowledgeBaseListProps> = ({ kbList, selectedK
                                     />
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', marginTop: 8 }}>
-                                    {kb.role === 'owner' && (
+                                    {kb.role === 'OWNER' && (
                                         <UserOutlined style={{ color: '#1677ff', marginRight: 8 }} title="拥有者" />
                                     )}
-                                    {kb.role === 'editor' && (
+                                    {kb.role === 'EDITOR' && (
                                         <EditOutlined style={{ color: '#52c41a', marginRight: 8 }} title="编辑者" />
                                     )}
                                     {kb.role === 'VIEWER' && (

@@ -1,6 +1,6 @@
 import { fetchAPI } from "./BaseApi";
 
-export type RoleEnum = 'owner' | 'editor' | 'viewer'; // 根据实际后端枚举值调整
+export type RoleEnum = 'OWNER' | 'EDITOR' | 'VIEWER'; // 根据实际后端枚举值调整
 
 export interface KnowledgeBaseListResponse {
     knowledgeBaseId: string;

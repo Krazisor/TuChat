@@ -14,7 +14,7 @@ interface KnowledgeBaseInfoModalProps {
 }
 
 const roleOptions = [
-    { label: <><EditOutlined style={{ color: '#52c41a' }} /> 编辑者</>, value: 'editor' },
+    { label: <><EditOutlined style={{ color: '#52c41a' }} /> 编辑者</>, value: 'EDITOR' },
     { label: <><EyeOutlined style={{ color: '#faad14' }} /> 只读者</>, value: 'VIEWER' },
     { label: <><CloseCircleOutlined style={{ color: '#888' }} /> 无权限</>, value: 'none' },
 ];
@@ -29,7 +29,7 @@ const KnowledgeBaseInfoModal: React.FC<KnowledgeBaseInfoModalProps> = ({
     onChangeInfo
 }) => {
     const [deleteConfirm, setDeleteConfirm] = useState('');
-    const [ownerChangeRole, setOwnerChangeRole] = useState<RoleEnum | 'none'>('editor');
+    const [ownerChangeRole, setOwnerChangeRole] = useState<RoleEnum | 'none'>('EDITOR');
     const [isChangingOwner, setIsChangingOwner] = useState(false);
 
     if (!kbInfo) return null;
@@ -55,7 +55,7 @@ const KnowledgeBaseInfoModal: React.FC<KnowledgeBaseInfoModalProps> = ({
 
     const handleChangeOwner = async () => {
         if (onChangeOwner) {
-            await onChangeOwner(kbInfo.knowledgeBaseId, ownerChangeRole === 'none' ? 'viewer' : ownerChangeRole);
+            await onChangeOwner(kbInfo.knowledgeBaseId, ownerChangeRole === 'none' ? 'VIEWER' : ownerChangeRole);
             setIsChangingOwner(false);
             onClose();
         }
@@ -98,12 +98,12 @@ const KnowledgeBaseInfoModal: React.FC<KnowledgeBaseInfoModalProps> = ({
                     <LockOutlined style={{ color: '#1677ff', marginRight: 6 }} />我的身份
                 </div>
                 <Input
-                    value={currentUserRole === 'owner' ? '拥有者' : currentUserRole === 'editor' ? '编辑者' : '只读者'}
+                    value={currentUserRole === 'OWNER' ? '拥有者' : currentUserRole === 'EDITOR' ? '编辑者' : '只读者'}
                     disabled
                     style={{ background: '#f5f5f5', fontWeight: 500, color: '#1677ff' }}
                 />
             </div>
-            {currentUserRole === 'owner' && (
+            {currentUserRole === 'OWNER' && (
                 <>
                     <Divider style={{ margin: '16px 0' }} />
                     {/* 角色配置：编辑者名单和预览者名单各一行 */}

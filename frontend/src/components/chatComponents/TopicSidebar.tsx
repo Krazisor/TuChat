@@ -2,7 +2,6 @@ import React from 'react';
 import {Card, Button, Input} from 'antd';
 import {PlusOutlined} from '@ant-design/icons';
 import {Conversations, type ConversationsProps} from '@ant-design/x';
-// import './TopicSidebar.css'
 interface TopicSidebarProps {
     isCreatingTopic: boolean;
     handleCreateTopic: () => void;

@@ -1,5 +1,19 @@
 package com.thr.tuchat.constant;
 
+import com.baomidou.mybatisplus.annotation.EnumValue;
+import lombok.Getter;
+
+@Getter
 public enum RoleEnum {
-    OWNER, EDITOR, VIEWER
+    OWNER("owner"),
+    EDITOR("editor"),
+    VIEWER("viewer"),;
+
+    @EnumValue
+    private final String role;
+
+    RoleEnum(String role) {
+        this.role = role;
+    }
+
 }
