@@ -2,7 +2,7 @@ import React from 'react';
 import {Card, Button, Input} from 'antd';
 import {PlusOutlined} from '@ant-design/icons';
 import {Conversations, type ConversationsProps} from '@ant-design/x';
-
+// import './TopicSidebar.css'
 interface TopicSidebarProps {
     isCreatingTopic: boolean;
     handleCreateTopic: () => void;
@@ -63,6 +63,7 @@ const TopicSidebar: React.FC<TopicSidebarProps> = ({
         )}
         <div style={{flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column'}}>
             <Conversations
+                className="conversations"
                 menu={menuConfig}
                 items={conversations}
                 activeKey={activeTopic}
