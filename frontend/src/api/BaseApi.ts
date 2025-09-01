@@ -82,7 +82,7 @@ export const uploadFileAPI = async <T>(
     }
 
     const result: Result<T> = await response.json();
-    if (result.code !== 200) {
+    if (result.code !== 0) {
         message.error(result.message);
         throw new Error(result.message);
     } else {

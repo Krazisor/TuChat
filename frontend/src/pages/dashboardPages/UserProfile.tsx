@@ -41,40 +41,17 @@ const UserProfile = () => {
     const dispatch = useAppDispatch();
     const [editing, setEditing] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [changePassword, setChangePassword] = useState(false);
     const userSlice = useAppSelector(state => state.user)
 
-    // 处理头像上传
-    const handleAvatarChange: UploadProps['onChange'] = (info) => {
-        // status: uploading, done, error, removed
-        if (info.file.status === 'uploading') {
-            // 可以加loading处理
-            return;
-        }
-        if (info.file.status === 'done') {
-            setUserData({
-                ...userData,
-                avatar: info.file.response?.url || URL.createObjectURL(info.file.originFileObj!)
-            });
-            message.success('头像上传成功');
-        } else if (info.file.status === 'error') {
-            message.error('头像上传失败');
-        }
-    };
-
     const customRequest = async (options: any) => {
-        const { file, onSuccess, onError } = options;
-        try {
-            const result = await updateUserAvatar(file as File);
-            const userInfo = await getUserBaseInfo();
-            if (userInfo != null) {
-                dispatch(setUserInfo(userInfo))
-            }
-            // 手动触发onSuccess，Upload才会进到done状态
-            onSuccess(result, file);
-        } catch (e) {
-            onError(e);
+        const { file, onSuccess } = options;
+        const result = await updateUserAvatar(file as File);
+        const userInfo = await getUserBaseInfo();
+        if (userInfo != null) {
+            dispatch(setUserInfo(userInfo))
         }
+        // 手动触发onSuccess，Upload才会进到done状态
+        onSuccess(result, file);
     }
 
     useEffect(() => {
@@ -92,7 +69,6 @@ const UserProfile = () => {
     // 启用编辑模式
     const handleEdit = () => {
         setEditing(true);
-        setChangePassword(false);
         form.setFieldsValue({
             userName: userData.userName,
             email: userData.email,
@@ -102,7 +78,6 @@ const UserProfile = () => {
     // 取消编辑
     const handleCancel = () => {
         setEditing(false);
-        setChangePassword(false);
         form.resetFields();
     };
 
@@ -111,7 +86,6 @@ const UserProfile = () => {
         try {
             setLoading(true);
             const values = await form.validateFields();
-
             // 这里应该是API调用来更新用户信息
             setTimeout(() => {
                 setUserData({
@@ -119,9 +93,7 @@ const UserProfile = () => {
                     userName: values.userName,
                     email: values.email
                 });
-
                 setEditing(false);
-                setChangePassword(false);
                 setLoading(false);
                 message.success('个人信息已更新');
             }, 1000);
@@ -154,7 +126,6 @@ const UserProfile = () => {
                                 className="avatar-uploader"
                                 showUploadList={false}
                                 customRequest={customRequest} // 使用自己的上传函数
-                                onChange={handleAvatarChange}
                             >
                                 {userData.avatar ? (
                                     <Avatar

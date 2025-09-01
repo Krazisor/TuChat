@@ -3,6 +3,7 @@ package com.thr.tuchat.service.impl;
 import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.thr.tuchat.constant.ChangeTypeEnum;
 import com.thr.tuchat.constant.RoleEnum;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.annotation.Resource;
+
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -109,6 +111,17 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeBaseMapper, K
     }
 
     @Override
+    public Map<RoleEnum, List<String>> getKnowledgeBaseMember(String knowledgeBaseId) {
+        String userId = StpUtil.getLoginIdAsString();
+        LambdaQueryWrapper<KnowledgeBase> queryWrapper = Wrappers.<KnowledgeBase>lambdaQuery()
+                .eq(KnowledgeBase::getKnowledgeBaseId, knowledgeBaseId);
+        List<KnowledgeBase> knowledgeBases = knowledgeBaseMapper.selectList(queryWrapper);
+        ThrowUtils.throwIf(!userId.equals(knowledgeBases.getFirst().getOwnerId()), ResultCode.PARAMS_ERROR,
+                "非知识库拥有者想要获取知识库成员");
+        return this.getCurrentMembersGroupedByRole(knowledgeBaseId);
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean deleteKnowledgeBaseWithFile(String knowledgeBaseId) {
         // 验证权限：当前用户是否为知识库拥有者
@@ -161,6 +174,73 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeBaseMapper, K
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    public boolean changeKnowledgeBaseOwner(String knowledgeBaseId, String newOwnerId, RoleEnum newRole) {
+        ThrowUtils.throwIf(knowledgeBaseId.isEmpty(), ResultCode.PARAMS_ERROR, "knowledgeBaseId为空");
+        ThrowUtils.throwIf(newOwnerId.isEmpty(), ResultCode.PARAMS_ERROR, "newOwnerId为空");
+        ThrowUtils.throwIf(RoleEnum.OWNER.equals(newRole), ResultCode.OPERATION_ERROR, "用户易主后还相当主人");
+        // 首先查到知识库，查看操作人是否是知识库的主人
+        String redisKeyForOwner = "knowledgeBase:owner:" + knowledgeBaseId;
+        RLock lock = redissonClient.getLock(redisKeyForOwner);
+        try {
+            boolean locked = lock.tryLock(LOCK_WAIT_TIMEOUT_SECONDS, LOCK_LEASE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            ThrowUtils.throwIf(!locked, ResultCode.PARAMS_ERROR, "当前知识库正在被易主，请不要重复提交请求");
+            String operationUserId = StpUtil.getLoginIdAsString();
+            LambdaQueryWrapper<KnowledgeBase> knowledgeBaseQueryWrapper = new LambdaQueryWrapper<>();
+            knowledgeBaseQueryWrapper.eq(KnowledgeBase::getKnowledgeBaseId, knowledgeBaseId);
+            KnowledgeBase knowledgeBase = knowledgeBaseMapper.selectOne(knowledgeBaseQueryWrapper);
+            ThrowUtils.throwIf(knowledgeBase == null, ResultCode.NOT_FOUND_ERROR, "不存在的用户Id");
+            ThrowUtils.throwIf(!knowledgeBase.getOwnerId().equals(operationUserId), ResultCode.NO_AUTH_ERROR,
+                    "用户企图易主不是自己的知识库");
+            ThrowUtils.throwIf(knowledgeBase.getOwnerId().equals(newOwnerId), ResultCode.OPERATION_ERROR,
+                    "用户想把自己的知识库传给自己");
+            // 接下来在知识库表中修改主人的id
+            knowledgeBase.setOwnerId(newOwnerId);
+            knowledgeBaseMapper.updateById(knowledgeBase);
+            // 接下来操作member表中的数据。首先，删除新用户原先可能留存的member记录
+            LambdaQueryWrapper<KnowledgeBaseMember> memberQueryWrapper = new LambdaQueryWrapper<>();
+            memberQueryWrapper.select(KnowledgeBaseMember::getId);
+            memberQueryWrapper.eq(KnowledgeBaseMember::getKnowledgeBaseId, knowledgeBaseId);
+            memberQueryWrapper.eq(KnowledgeBaseMember::getUserId, newOwnerId);
+            KnowledgeBaseMember member = knowledgeBaseMemberMapper.selectOne(memberQueryWrapper);
+            knowledgeBaseMemberMapper.deleteById(member.getId());
+            // 接下来，找到OWNER的记录，修改对应的ID
+            LambdaQueryWrapper<KnowledgeBaseMember> ownerQueryWrapper = new LambdaQueryWrapper<>();
+            ownerQueryWrapper.select(KnowledgeBaseMember::getId);
+            ownerQueryWrapper.eq(KnowledgeBaseMember::getKnowledgeBaseId, knowledgeBaseId);
+            ownerQueryWrapper.eq(KnowledgeBaseMember::getRole, RoleEnum.OWNER.getRole());
+            KnowledgeBaseMember ownerMember = knowledgeBaseMemberMapper.selectOne(ownerQueryWrapper);
+            ownerMember.setUserId(newOwnerId);
+            knowledgeBaseMemberMapper.updateById(ownerMember);
+            // 最后,把原先的主人赋予新的职位
+            if (RoleEnum.NONE.equals(newRole)) {
+                return true;
+            } else {
+                KnowledgeBaseMember newMember = new KnowledgeBaseMember();
+                newMember.setKnowledgeBaseId(knowledgeBaseId).setUserId(operationUserId).setRole(newRole);
+                knowledgeBaseMemberMapper.insert(newMember);
+            }
+        } catch (InterruptedException e) {
+            log.error("获取锁时线程被中断, knowledgeBaseId: {}", knowledgeBaseId, e);
+            throw new BusinessException(ResultCode.SYSTEM_ERROR, "系统繁忙，请稍后重试");
+        } finally {
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
+                log.debug("分布式锁(易主知识库)释放成功, key: {}", redisKeyForOwner);
+            }
+        }
+        return true;
+    }
+
+    /**
+     * @param knowledgeBaseId 知识库Id
+     * @param name            知识库名称
+     * @param description     知识库描述
+     * @param editorList      编辑者名单
+     * @param viewList        浏览者名单
+     * @return 操作是否成功
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean updateKnowledgeBaseInfo(
             String knowledgeBaseId, String name, String description,
             List<String> editorList, List<String> viewList) {
@@ -204,6 +284,7 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeBaseMapper, K
 
     /**
      * 检查知识库名称是否重复
+     *
      * @param name 知识库名称
      * @return 是否可用，true 表示名称可用，false 表示名称已存在
      */
@@ -228,9 +309,10 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeBaseMapper, K
 
     /**
      * 知识库基本信息更新
+     *
      * @param knowledgeBaseId 知识库ID
-     * @param name 知识库名称
-     * @param description 知识库描述
+     * @param name            知识库名称
+     * @param description     知识库描述
      * @return 更新是否成功
      */
     private boolean updateBasicInfo(String knowledgeBaseId, String name, String description) {
@@ -243,9 +325,10 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeBaseMapper, K
 
     /**
      * 知识库角色名单更新
+     *
      * @param knowledgeBaseId 知识库ID
-     * @param editorList 新的编辑者名单
-     * @param viewList 新的浏览者名单
+     * @param editorList      新的编辑者名单
+     * @param viewList        新的浏览者名单
      */
     private void updateMembers(String knowledgeBaseId, List<String> editorList, List<String> viewList) {
         Map<RoleEnum, List<String>> roleListMap = getCurrentMembersGroupedByRole(knowledgeBaseId);
@@ -267,13 +350,14 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeBaseMapper, K
             List<KnowledgeBaseMember> toRemove = knowledgeBaseMemberMapper.selectList(removeQuery);
             if (!toRemove.isEmpty()) {
                 List<Long> removeIds = toRemove.stream().map(KnowledgeBaseMember::getId).collect(Collectors.toList());
-                knowledgeBaseMemberMapper.deleteBatchIds(removeIds);
+                knowledgeBaseMemberMapper.deleteByIds(removeIds);
             }
         }
     }
 
     /**
      * 查询知识库ID中所有成员，按照身份区分
+     *
      * @param knowledgeBaseId 知识库ID
      * @return 以 RoleEnum 为键的成员ID清单
      */
@@ -287,9 +371,10 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeBaseMapper, K
 
     /**
      * 构造 KnowledgeBaseMember 列表
+     *
      * @param knowledgeBaseId 知识库ID
-     * @param userIds 用户ID列表
-     * @param role 身份
+     * @param userIds         用户ID列表
+     * @param role            身份
      * @return KnowledgeBaseMember 列表
      */
     private List<KnowledgeBaseMember> createMembersFromChanges(String knowledgeBaseId, List<String> userIds, RoleEnum role) {
@@ -307,6 +392,7 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeBaseMapper, K
 
     /**
      * 按角色分组成员
+     *
      * @param members 某个知识库所有的成员清单
      * @return 以 RoleEnum 为键的成员ID清单
      */
@@ -329,7 +415,8 @@ public class KnowledgeBaseServiceImpl extends ServiceImpl<KnowledgeBaseMapper, K
 
     /**
      * 计算用户列表的变化，区分需要添加和移除的用户
-     * @param newUserList 新用户列表
+     *
+     * @param newUserList      新用户列表
      * @param existingUserList 老用户列表
      * @return 以 ChangeTypeEnum 为键，包含待删除和新增 userId 列表的 Map
      */

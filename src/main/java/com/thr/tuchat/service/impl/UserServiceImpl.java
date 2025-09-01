@@ -48,8 +48,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public User getUserById(String userId) {
         User user = userMapper.selectById(userId);
         try {
-            String tempURL = minioService.getTemporaryURL(user.getAvatar());
-            user.setAvatar(tempURL);
+            if (user.getAvatar() != null) {
+                String tempURL = minioService.getTemporaryURL(user.getAvatar());
+                user.setAvatar(tempURL);
+            }
             return user;
         } catch (Exception e) {
             throw new BusinessException(ResultCode.SYSTEM_ERROR, "无法获取临时URL");

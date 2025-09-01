@@ -7,7 +7,8 @@ import lombok.Getter;
 public enum RoleEnum {
     OWNER("owner"),
     EDITOR("editor"),
-    VIEWER("viewer"),;
+    VIEWER("viewer"),
+    NONE("none");
 
     @EnumValue
     private final String role;

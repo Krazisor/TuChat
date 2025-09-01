@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, message, type UploadProps } from 'antd';
 import { InboxOutlined } from '@ant-design/icons';
-import { addKnowledgeBase, getKnowledgeBaseList, type KnowledgeBaseListResponse, type NewKnowledgeBaseRequest } from '../../api/KnowledgeBaseApi';
+import { addKnowledgeBase, deleteKnowledgeBase, getKnowledgeBaseList, updateKnowledgeBase, type KnowledgeBaseListResponse, type KnowledgeUpdateRequest, type NewKnowledgeBaseRequest } from '../../api/KnowledgeBaseApi';
 import Dragger from 'antd/es/upload/Dragger';
 import { getFileListByKnowledgeBaseId, uploadFilesToKnowledgeBase, type FileListResponse } from '../../api/FileApi';
 import KnowledgeBaseInfoModal from '../../components/knowledgeComponents/KnowledgeBaseInfoModal';
@@ -26,6 +26,12 @@ const KnowledgePages: React.FC = () => {
     const [previewFile, setPreviewFile] = useState<FileListResponse | null>(null);
     const [newKbName, setNewKbName] = useState('');
     const [newKbDescription, setNewKbDescription] = useState<string | null>(null);
+    const [curKbInfo, setCurKbInfo] = useState<KnowledgeBaseListResponse | null>(null);
+
+    // 获取知识库详情
+    useEffect(() => {
+        setCurKbInfo(kbList.find(kb => kb.knowledgeBaseId === selectedKbId) || null);
+    }, [selectedKbId, kbInfoModalVisible]);
 
     // 获取知识库列表
     const fetchKbList = async () => {
@@ -37,6 +43,15 @@ const KnowledgePages: React.FC = () => {
             }
         } else {
             message.error('获取知识库列表失败');
+        }
+    }
+
+    // 修改知识库信息
+    const handleUpdateKbInfo = async (request: KnowledgeUpdateRequest) => {
+        const data = await updateKnowledgeBase(request);
+        if (data) {
+            fetchKbList();
+            return true;
         }
     }
 
@@ -209,14 +224,13 @@ const KnowledgePages: React.FC = () => {
                 </Dragger>
             </Modal>
             <KnowledgeBaseInfoModal
-                open={kbInfoModalVisible}
-                onClose={() => setKbInfoModalVisible(false)}
-                kbInfo={kbList.find(kb => kb.knowledgeBaseId === selectedKbId) || null}
-                currentUserRole={kbList.find(kb => kb.knowledgeBaseId === selectedKbId)?.role || null}
-            // onConfigEditor={() => { }}
-            // onConfigViewer={() => { }}
-            // onDeleteKb={() => {}}
-            // onChangeOwner={handleChangeOwner}
+                visible={kbInfoModalVisible}
+                setVisible={setKbInfoModalVisible}
+                kbInfo={curKbInfo}
+                setKbInfo={setCurKbInfo}
+                onDeleteKb={deleteKnowledgeBase}
+                fetchKbList={fetchKbList}
+                onChangeInfo={handleUpdateKbInfo}
             />
         </div>
     );
